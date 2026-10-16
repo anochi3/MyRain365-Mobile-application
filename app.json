@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "MyRain365",
-    "slug": "MyRain365",
+    "slug": "myrain365",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -39,6 +39,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4279ede4-cb96-4b73-a000-c7ec4a30855b"
+      }
+    },
+    "owner": "deliafragas-team"
   }
 }
