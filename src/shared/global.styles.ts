@@ -15,7 +15,7 @@ export const colors = {
     warningBackground: '#F8E6DE',
     warningBorder: '#EFD1C5',
 
-    green: '#218579'
+    green: '#218579',
 
     labelText: '#5B6678',
     cardBorder: '#E6E2DB',
@@ -23,6 +23,7 @@ export const colors = {
 
     inactiveTab:'#EFEBE3',
     activeTab: '#FFFEFC',
+    }
 
 export const globalStyles = StyleSheet.create({
   container: {
