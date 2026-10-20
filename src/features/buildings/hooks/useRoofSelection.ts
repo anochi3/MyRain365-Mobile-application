@@ -1,179 +1,127 @@
+import { useRef, useState } from 'react';
+import { Keyboard } from 'react-native';
 
-import { useEffect, useRef, useState } from 'react';
-import MapView, { Region } from 'react-native-maps';
+import { getDevicePosition } from '@/data/services/locationService';
+import { findBuildingAt, reverseGeocode, type AddressSuggestion } from '@/data/services/ignService';
+import type { Coordinates } from '@/shared/geo';
 
-import {
-  Coordinates,
-  getCurrentLocation,
-  reverseGeocode,
-  searchAddress as searchAddressService,
-} from '../../../data/services/locationService';
+import type { BuildingMapHandle } from '../components/buildingMap.types';
+import type { RoofSelectionStatus } from '../types';
+import { useAddressSuggestions } from './useAddressSuggestions';
 
-export const INITIAL_MAP_REGION: Region = {
-  latitude: 50.6942,
-  longitude: 3.1746,
-  latitudeDelta: 0.004,
-  longitudeDelta: 0.004,
-};
+export const INITIAL_MAP_CENTER: Coordinates = { latitude: 50.6901, longitude: 3.1817 };
+export const INITIAL_MAP_ZOOM = 16;
 
-export type RoofSelection = {
-  address: string;
-  latitude: number;
-  longitude: number;
-  roofAreaM2: number;
-};
-
-export type ActionResult =
-  | { ok: true }
-  | {
-      ok: false;
-      reason:
-        | 'permission-denied'
-        | 'not-found'
-        | 'empty-query'
-        | 'invalid-area'
-        | 'error';
-    };
+const isAbort = (error: unknown) => error instanceof Error && error.name === 'AbortError';
 
 export function useRoofSelection() {
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<BuildingMapHandle>(null);
+  const roofRequest = useRef<AbortController | null>(null);
 
-  const [region, setRegion] = useState<Region>(INITIAL_MAP_REGION);
-  const [address, setAddress] = useState('Roubaix, France');
+  const [status, setStatus] = useState<RoofSelectionStatus>({ kind: 'idle' });
+  const [address, setAddress] = useState<string | null>(null);
+  const [gpsAccuracyM, setGpsAccuracyM] = useState<number | null>(null);
+  const [isMapMoving, setIsMapMoving] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [roofArea, setRoofArea] = useState('');
-
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  const [hasLocationPermission, setHasLocationPermission] =
-    useState(false);
 
-  // Update the displayed address after the map stops moving.
-  useEffect(() => {
-    let isActive = true;
+  const suggestions = useAddressSuggestions(searchText, isSearching);
 
-    const timeout = setTimeout(async () => {
-      try {
-        const result = await reverseGeocode({
-          latitude: region.latitude,
-          longitude: region.longitude,
-        });
+  const cancelRoofRequest = () => {
+    roofRequest.current?.abort();
+    roofRequest.current = null;
+  };
 
-        if (isActive && result) {
-          setAddress(result);
-        }
-      } catch {
-        // Manual address and map selection remain available.
-      }
-    }, 800);
-
-    return () => {
-      isActive = false;
-      clearTimeout(timeout);
-    };
-  }, [region.latitude, region.longitude]);
-
-  function moveMap(coordinates: Coordinates) {
-    const nextRegion: Region = {
-      ...coordinates,
-      latitudeDelta: 0.004,
-      longitudeDelta: 0.004,
-    };
-
-    setRegion(nextRegion);
-    mapRef.current?.animateToRegion(nextRegion, 450);
-  }
-
-  async function useMyLocation(): Promise<ActionResult> {
-    try {
-      setIsLoadingLocation(true);
-
-      const result = await getCurrentLocation();
-
-      if (result.status === 'permission-denied') {
-        setHasLocationPermission(false);
-
-        return {
-          ok: false,
-          reason: 'permission-denied',
-        };
-      }
-
-      setHasLocationPermission(true);
-      setAddress(result.location.address);
-      moveMap(result.location);
-
-      return { ok: true };
-    } catch {
-      return { ok: false, reason: 'error' };
-    } finally {
-      setIsLoadingLocation(false);
-    }
-  }
-
-  async function searchForAddress(): Promise<ActionResult> {
-    const query = searchText.trim();
-
-    if (!query) {
-      return { ok: false, reason: 'empty-query' };
-    }
+  const loadRoof = async (center: Coordinates) => {
+    cancelRoofRequest();
+    const controller = new AbortController();
+    roofRequest.current = controller;
+    setStatus({ kind: 'loadingRoof' });
 
     try {
-      setIsSearching(true);
-
-      const result = await searchAddressService(query);
-
-      if (!result) {
-        return { ok: false, reason: 'not-found' };
+      const [building, label] = await Promise.all([
+        findBuildingAt(center, controller.signal),
+        reverseGeocode(center, controller.signal).catch(() => null),
+      ]);
+      setAddress(label);
+      mapRef.current?.showOutline(building?.outline ?? null);
+      setStatus(
+        building
+          ? { kind: 'roofFound', roof: { building, center, address: label } }
+          : { kind: 'noBuilding' },
+      );
+    } catch (error) {
+      if (!isAbort(error)) {
+        setStatus({ kind: 'unavailable' });
       }
+    }
+  };
 
-      setAddress(result.address);
-      moveMap(result);
+  const handleMapMoveStart = () => setIsMapMoving(true);
 
-      return { ok: true };
+  const handleMapMoveEnd = (center: Coordinates, isUserInitiated: boolean) => {
+    setIsMapMoving(false);
+    if (isUserInitiated) {
+      void loadRoof(center);
+    }
+  };
+
+  const locateDevice = async () => {
+    Keyboard.dismiss();
+    setIsSearching(false);
+    cancelRoofRequest();
+    mapRef.current?.showOutline(null);
+    setStatus({ kind: 'locating' });
+
+    try {
+      const result = await getDevicePosition();
+      if (result.status === 'denied') {
+        setStatus({ kind: 'locationDenied', canAskAgain: result.canAskAgain });
+        return;
+      }
+      setGpsAccuracyM(result.position.accuracyM);
+      mapRef.current?.flyTo(result.position);
     } catch {
-      return { ok: false, reason: 'error' };
-    } finally {
-      setIsSearching(false);
+      setStatus({ kind: 'locationDenied', canAskAgain: true });
     }
-  }
+  };
 
-  function getRoofSelection():
-    | { ok: true; selection: RoofSelection }
-    | { ok: false; reason: 'invalid-area' } {
-    const parsedArea = Number(roofArea.trim().replace(',', '.'));
+  const startSearch = () => {
+    setSearchText(address ?? '');
+    setIsSearching(true);
+  };
 
-    if (!Number.isFinite(parsedArea) || parsedArea <= 0) {
-      return { ok: false, reason: 'invalid-area' };
+  const endSearch = () => setIsSearching(false);
+
+  const selectSuggestion = (suggestion: AddressSuggestion) => {
+    Keyboard.dismiss();
+    setIsSearching(false);
+    setGpsAccuracyM(null);
+    mapRef.current?.flyTo(suggestion);
+  };
+
+  const submitSearch = () => {
+    if (suggestions[0]) {
+      selectSuggestion(suggestions[0]);
     }
-
-    return {
-      ok: true,
-      selection: {
-        address,
-        latitude: region.latitude,
-        longitude: region.longitude,
-        roofAreaM2: parsedArea,
-      },
-    };
-  }
+  };
 
   return {
     mapRef,
-    region,
+    status,
     address,
+    gpsAccuracyM,
+    isMapMoving,
     searchText,
-    roofArea,
-    isLoadingLocation,
     isSearching,
-    hasLocationPermission,
-
+    suggestions,
     setSearchText,
-    setRoofArea,
-    onRegionChangeComplete: setRegion,
-
-    useMyLocation,
-    searchForAddress,
-    getRoofSelection,
+    startSearch,
+    endSearch,
+    submitSearch,
+    selectSuggestion,
+    locateDevice,
+    handleMapMoveStart,
+    handleMapMoveEnd,
   };
 }

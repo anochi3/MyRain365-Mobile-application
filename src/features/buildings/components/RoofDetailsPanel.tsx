@@ -1,115 +1,209 @@
-
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import type { ComponentProps } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '../../../shared/global.styles';
+import { colors, shadows } from '@/shared/global.styles';
+
+import type { RoofSelectionStatus } from '../types';
+
+const ROUGH_GPS_ACCURACY_M = 25;
+
+type IconName = ComponentProps<typeof Ionicons>['name'];
+
+type Tone = 'success' | 'warning' | 'neutral';
+
+const TONES: Record<Tone, { background: string; foreground: string }> = {
+  success: { background: colors.greenBackground, foreground: colors.green },
+  warning: { background: colors.warningBackground, foreground: colors.warningTitle },
+  neutral: { background: colors.inactiveTab, foreground: colors.secondaryText },
+};
 
 type Props = {
-  address: string;
-  roofArea: string;
-  onRoofAreaChange: (value: string) => void;
-  onContinue: () => void;
+  status: RoofSelectionStatus;
+  gpsAccuracyM: number | null;
+  onUseRoof: () => void;
+  onLocate: () => void;
+  onOpenSettings: () => void;
 };
 
 export default function RoofDetailsPanel({
-  address,
-  roofArea,
-  onRoofAreaChange,
-  onContinue,
+  status,
+  gpsAccuracyM,
+  onUseRoof,
+  onLocate,
+  onOpenSettings,
 }: Props) {
+  const isRoofStep =
+    status.kind === 'loadingRoof' || status.kind === 'roofFound' || status.kind === 'noBuilding';
+  const isDisabled =
+    status.kind === 'locating' || status.kind === 'loadingRoof' || status.kind === 'noBuilding';
+
   return (
     <View style={styles.container}>
       <View style={styles.handle} />
 
-      <View style={styles.headingRow}>
-        <View style={styles.iconContainer}>
-          <Ionicons
-            name="home-outline"
-            size={26}
-            color={colors.green}
-          />
-        </View>
+      <PanelContent status={status} gpsAccuracyM={gpsAccuracyM} onOpenSettings={onOpenSettings} />
 
-        <View style={styles.headingText}>
-          <Text style={styles.title}>Choose your building</Text>
-          <Text style={styles.subtitle}>
-            Move the map to place the pin over your roof.
-          </Text>
-        </View>
-      </View>
-
-      <Text style={styles.address} numberOfLines={2}>
-        {address}
-      </Text>
-
-      <Text style={styles.label}>Roof area (m²)</Text>
-
-      <TextInput
-        value={roofArea}
-        onChangeText={onRoofAreaChange}
-        placeholder="Enter roof area, e.g. 52"
-        placeholderTextColor={colors.secondaryText}
-        keyboardType="decimal-pad"
-        style={styles.input}
-        accessibilityLabel="Roof area in square metres"
-      />
-
-      <Text style={styles.helperText}>
-        Enter a measured or verified area. The map pin does not
-        automatically measure the roof.
-      </Text>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={onContinue}
-        activeOpacity={0.85}
+      <Pressable
+        onPress={status.kind === 'roofFound' ? onUseRoof : onLocate}
+        disabled={isDisabled}
+        style={({ pressed }) => [
+          styles.button,
+          isDisabled && styles.buttonDisabled,
+          pressed && styles.buttonPressed,
+        ]}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isDisabled }}
       >
-        <Text style={styles.buttonText}>Use this roof</Text>
-        <Ionicons
-          name="arrow-forward"
-          size={20}
-          color="#FFFFFF"
+        <Text style={styles.buttonText}>{isRoofStep ? 'Use this roof' : 'Use my location'}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+type PanelContentProps = Pick<Props, 'status' | 'gpsAccuracyM' | 'onOpenSettings'>;
+
+function PanelContent({ status, gpsAccuracyM, onOpenSettings }: PanelContentProps) {
+  switch (status.kind) {
+    case 'roofFound':
+      return (
+        <>
+          <PanelHeading
+            icon="home"
+            tone="success"
+            title="Roof found under the pin"
+            subtitle="Outline from IGN BD TOPO, measured from above"
+          />
+          <View style={styles.areaRow}>
+            <Text style={styles.area}>{Math.round(status.roof.building.roofAreaM2)} m²</Text>
+            <Text style={styles.hint}>
+              {gpsAccuracyM !== null && gpsAccuracyM > ROUGH_GPS_ACCURACY_M
+                ? `GPS is accurate to about ${Math.round(gpsAccuracyM)} m. Drag the map if this is not your roof.`
+                : 'Not your home? Tap another roof'}
+            </Text>
+          </View>
+        </>
+      );
+    case 'loadingRoof':
+      return (
+        <PanelHeading
+          tone="neutral"
+          title="Reading the roof"
+          subtitle="Looking up the building outline under the pin"
         />
-      </TouchableOpacity>
+      );
+    case 'locating':
+      return (
+        <PanelHeading
+          tone="neutral"
+          title="Finding your location"
+          subtitle="Allow location access to jump to your house"
+        />
+      );
+    case 'noBuilding':
+      return (
+        <PanelHeading
+          icon="alert-circle-outline"
+          tone="warning"
+          title="No building under the pin"
+          subtitle="Drag the map so the pin sits on your roof"
+        />
+      );
+    case 'unavailable':
+      return (
+        <PanelHeading
+          icon="cloud-offline-outline"
+          tone="warning"
+          title="Could not reach the map service"
+          subtitle="Check your connection, then move the map to try again"
+        />
+      );
+    case 'locationDenied':
+      return (
+        <>
+          <PanelHeading
+            icon="location-outline"
+            tone="warning"
+            title="Location is off"
+            subtitle="Search your address above, or drag the map onto your roof"
+          />
+          {!status.canAskAgain && (
+            <Pressable onPress={onOpenSettings} hitSlop={8} accessibilityRole="link">
+              <Text style={styles.link}>Open settings to allow location</Text>
+            </Pressable>
+          )}
+        </>
+      );
+    case 'idle':
+      return (
+        <PanelHeading
+          icon="home-outline"
+          tone="success"
+          title="Where is your home?"
+          subtitle="Use your location or search your address, then fine-tune the pin on your roof"
+        />
+      );
+  }
+}
+
+type PanelHeadingProps = {
+  icon?: IconName;
+  tone: Tone;
+  title: string;
+  subtitle: string;
+};
+
+function PanelHeading({ icon, tone, title, subtitle }: PanelHeadingProps) {
+  const { background, foreground } = TONES[tone];
+
+  return (
+    <View style={styles.heading}>
+      <View style={[styles.iconContainer, { backgroundColor: background }]}>
+        {icon ? (
+          <Ionicons name={icon} size={24} color={foreground} />
+        ) : (
+          <ActivityIndicator color={foreground} />
+        )}
+      </View>
+      <View style={styles.headingText}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.subtitle}>{subtitle}</Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     backgroundColor: colors.background,
-    paddingHorizontal: 22,
-    paddingTop: 12,
-    paddingBottom: 24,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    marginTop: -18,
+    ...shadows.floating,
   },
   handle: {
-    width: 42,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: colors.cardBorder,
     alignSelf: 'center',
-    marginBottom: 22,
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    marginBottom: 16,
+    backgroundColor: colors.cardBorder,
   },
-  headingRow: {
+  heading: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
   },
   iconContainer: {
-    width: 58,
-    height: 58,
-    borderRadius: 17,
-    backgroundColor: '#DFF0EC',
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -118,56 +212,57 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.primaryText,
-    fontSize: 21,
+    fontSize: 17,
     fontWeight: '700',
   },
   subtitle: {
     color: colors.secondaryText,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 3,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 2,
   },
-  address: {
+  areaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+    marginTop: 18,
+  },
+  area: {
     color: colors.primaryText,
-    fontSize: 15,
-    fontWeight: '600',
-    marginTop: 22,
-    marginBottom: 18,
+    fontSize: 34,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
-  label: {
+  hint: {
+    flex: 1,
+    textAlign: 'right',
     color: colors.secondaryText,
     fontSize: 13,
+    lineHeight: 18,
+  },
+  link: {
+    marginTop: 12,
+    color: colors.buttons,
+    fontSize: 14,
     fontWeight: '600',
-    marginBottom: 8,
-  },
-  input: {
-    height: 52,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.cardBackground,
-    paddingHorizontal: 16,
-    fontSize: 17,
-    color: colors.primaryText,
-  },
-  helperText: {
-    color: colors.secondaryText,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 9,
-    marginBottom: 18,
   },
   button: {
-    minHeight: 58,
-    borderRadius: 32,
-    backgroundColor: colors.buttons,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    height: 56,
+    marginTop: 20,
+    borderRadius: 28,
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'center',
+    backgroundColor: colors.buttons,
+  },
+  buttonDisabled: {
+    opacity: 0.45,
+  },
+  buttonPressed: {
+    opacity: 0.85,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: colors.buttonText,
     fontSize: 17,
     fontWeight: '700',
   },

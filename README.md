@@ -1,56 +1,64 @@
-# Welcome to your Expo app 👋
+# MyRain365
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Mobile app that estimates how much rainwater a home can collect, built with Expo (SDK 57), Expo Router and TypeScript.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Getting started
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Scan the QR code with Expo Go, or press `w` to open the web version.
 
-### Other setup steps
+## Scripts
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+| Command             | Purpose                                   |
+| ------------------- | ----------------------------------------- |
+| `npm start`         | Start the dev server                      |
+| `npm run lint`      | Lint with `eslint-config-expo`            |
+| `npm run typecheck` | Type-check                                |
+| `npm run format`    | Format with Prettier (`.prettierrc.json`) |
 
-## Learn more
+Run `lint`, `typecheck` and `format:check` before every push.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Project structure
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+src/
+  app/                      routes only (Expo Router)
+    (tabs)/_layout.tsx      bottom tabs: Overview, Locate
+    (tabs)/index.tsx        Overview
+    (tabs)/building.tsx     Locate (roof selection)
+  data/services/            network and device access, no UI
+    ignService.ts           IGN Géoplateforme: address search, reverse geocoding, building lookup
+    locationService.ts      device GPS with permission handling
+  features/<feature>/       one folder per feature
+    components/             presentational components
+    hooks/                  state and side effects
+    screens/                screens composed from components and hooks
+    types.ts                feature types
+  shared/                   code used by several features
+    geo.ts                  coordinates, polygon area and hit testing
+    global.styles.ts        colours, shadows, shared styles
+```
 
-## Join the community
+## Locate screen
 
-Join our community of developers creating universal apps.
+1. The user taps the location button or searches an address.
+2. The map flies to the point. The pin stays in the centre and the map moves under it.
+3. Each time the map stops after a user action, the app fetches the IGN BD TOPO building under the pin,
+   draws its outline and shows the roof area computed from the outline.
+4. "Use this roof" returns the building id, roof area, coordinates and address to the Overview.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The map is Leaflet running in a WebView (`BuildingMap.tsx`) or an iframe on web (`BuildingMap.web.tsx`),
+showing IGN BD ORTHO aerial photos. Both share `useMapBridge`, which queues commands until the map is ready
+and turns map messages into typed events (`buildingMap.types.ts`).
+
+## Data sources
+
+All from the IGN Géoplateforme, free, no API key, Licence Ouverte 2.0 (credit "IGN" on the map):
+
+- Aerial photos: BD ORTHO (WMTS `ORTHOIMAGERY.ORTHOPHOTOS`)
+- Buildings: BD TOPO (WFS `BDTOPO_V3:batiment`)
+- Addresses: Géoplateforme geocoder (`/geocodage/completion`, `/geocodage/reverse`)

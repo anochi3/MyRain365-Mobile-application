@@ -1,119 +1,89 @@
-
-import React from 'react';
-import {
-  Alert,
-  Keyboard,
-  SafeAreaView,
-  StyleSheet,
-  View,
-} from 'react-native';
 import { useRouter } from 'expo-router';
-import * as Linking from 'expo-linking';
+import { Linking, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors } from '../../../shared/global.styles';
+import { colors } from '@/shared/global.styles';
+
+import AddressSearchBar from '../components/AddressSearchBar';
 import BuildingMap from '../components/BuildingMap';
+import MapPin from '../components/MapPin';
 import RoofDetailsPanel from '../components/RoofDetailsPanel';
-import { useRoofSelection } from '../hooks/useRoofSelection';
+import { INITIAL_MAP_CENTER, INITIAL_MAP_ZOOM, useRoofSelection } from '../hooks/useRoofSelection';
 
 export default function RoofSelectionScreen() {
   const router = useRouter();
-  const roof = useRoofSelection();
+  const {
+    mapRef,
+    status,
+    address,
+    gpsAccuracyM,
+    isMapMoving,
+    searchText,
+    isSearching,
+    suggestions,
+    setSearchText,
+    startSearch,
+    endSearch,
+    submitSearch,
+    selectSuggestion,
+    locateDevice,
+    handleMapMoveStart,
+    handleMapMoveEnd,
+  } = useRoofSelection();
 
-  async function handleLocate() {
-    const result = await roof.useMyLocation();
-
-    if (result.ok) {
+  const confirmRoof = () => {
+    if (status.kind !== 'roofFound') {
       return;
     }
 
-    if (result.reason === 'permission-denied') {
-      Alert.alert(
-        'Location permission needed',
-        'Allow MyRain365 to access your location in order to find nearby buildings. You can also search manually.',
-        [
-          { text: 'Continue manually', style: 'cancel' },
-          {
-            text: 'Open settings',
-            onPress: () => {
-              void Linking.openSettings();
-            },
-          },
-        ],
-      );
-      return;
-    }
-
-    Alert.alert(
-      'Unable to get location',
-      'Check that location services are enabled, or search for an address instead.',
-    );
-  }
-
-  async function handleSearch() {
-    Keyboard.dismiss();
-
-    const result = await roof.searchForAddress();
-
-    if (result.ok) {
-      return;
-    }
-
-    const messages: Record<string, string> = {
-      'empty-query': 'Enter an address to search for.',
-      'not-found': 'No matching address was found. Try adding the city.',
-      'permission-denied': 'You can search for an address manually.',
-      'invalid-area': 'Enter a positive roof area in square metres.',
-      error: 'The search failed. Check your connection and try again.',
-    };
-
-    Alert.alert('Address search', messages[result.reason]);
-  }
-
-  function handleContinue() {
-    const result = roof.getRoofSelection();
-
-    if (!result.ok) {
-      Alert.alert(
-        'Roof area required',
-        'Enter a measured or verified roof area in square metres.',
-      );
-      return;
-    }
-
-    router.push({
-      pathname: '/(tabs)/water',
+    const { building, center, address } = status.roof;
+    router.navigate({
+      pathname: '/',
       params: {
-        address: result.selection.address,
-        latitude: String(result.selection.latitude),
-        longitude: String(result.selection.longitude),
-        roofAreaM2: String(result.selection.roofAreaM2),
+        buildingId: building.id,
+        roofAreaM2: String(Math.round(building.roofAreaM2)),
+        latitude: center.latitude.toFixed(6),
+        longitude: center.longitude.toFixed(6),
+        address: address ?? '',
       },
     });
-  }
+  };
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top']}>
       <View style={styles.mapArea}>
         <BuildingMap
-          mapRef={roof.mapRef}
-          region={roof.region}
-          onRegionChangeComplete={roof.onRegionChangeComplete}
-          searchText={roof.searchText}
-          onSearchTextChange={roof.setSearchText}
-          onSearch={handleSearch}
-          isSearching={roof.isSearching}
-          hasLocationPermission={roof.hasLocationPermission}
-          isLoadingLocation={roof.isLoadingLocation}
-          onLocate={handleLocate}
+          ref={mapRef}
+          initialCenter={INITIAL_MAP_CENTER}
+          initialZoom={INITIAL_MAP_ZOOM}
+          outlineColor={colors.green}
+          onMoveStart={handleMapMoveStart}
+          onMoveEnd={handleMapMoveEnd}
+        />
+
+        <MapPin isLifted={isMapMoving} />
+
+        <AddressSearchBar
+          value={isSearching ? searchText : (address ?? '')}
+          isSearching={isSearching}
+          suggestions={suggestions}
+          isLocating={status.kind === 'locating'}
+          onChangeText={setSearchText}
+          onFocus={startSearch}
+          onBlur={endSearch}
+          onSubmit={submitSearch}
+          onSelectSuggestion={selectSuggestion}
+          onLocatePress={locateDevice}
+        />
+
+        <RoofDetailsPanel
+          status={status}
+          gpsAccuracyM={gpsAccuracyM}
+          onUseRoof={confirmRoof}
+          onLocate={locateDevice}
+          onOpenSettings={() => void Linking.openSettings()}
         />
       </View>
-
-      <RoofDetailsPanel
-        address={roof.address}
-        roofArea={roof.roofArea}
-        onRoofAreaChange={roof.setRoofArea}
-        onContinue={handleContinue}
-      />
     </SafeAreaView>
   );
 }
@@ -121,7 +91,7 @@ export default function RoofSelectionScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.mapBackground,
   },
   mapArea: {
     flex: 1,

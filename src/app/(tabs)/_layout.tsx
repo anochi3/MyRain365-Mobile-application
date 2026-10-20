@@ -1,7 +1,23 @@
-
-import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../shared/global.styles';
+import { Tabs } from 'expo-router';
+import type { ComponentProps } from 'react';
+import type { ColorValue } from 'react-native';
+
+import { colors } from '@/shared/global.styles';
+
+type IconName = ComponentProps<typeof Ionicons>['name'];
+
+type TabBarIconProps = {
+  color: ColorValue;
+  size: number;
+  focused: boolean;
+};
+
+function tabIcon(active: IconName, inactive: IconName) {
+  return function TabBarIcon({ color, size, focused }: TabBarIconProps) {
+    return <Ionicons name={focused ? active : inactive} size={size} color={color} />;
+  };
+}
 
 export default function TabLayout() {
   return (
@@ -25,68 +41,11 @@ export default function TabLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{
-          title: 'Overview',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? 'home' : 'home-outline'}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
+        options={{ title: 'Overview', tabBarIcon: tabIcon('home', 'home-outline') }}
       />
-
-/////       <Tabs.Screen
-//         name="water"
-//         options={{
-//           title: 'Water',
-//           tabBarIcon: ({ color, size }) => (
-//             <Ionicons name="water" size={size} color={color} />
-//           ),
-//         }}
-//       />
-//
-//       <Tabs.Screen
-//         name="quality"
-//         options={{
-//           title: 'Quality',
-//           tabBarIcon: ({ color, size }) => (
-//             <Ionicons
-//               name="flask-outline"
-//               size={size}
-//               color={color}
-//             />
-//           ),
-//         }}
-//       />
-//
-//       <Tabs.Screen
-//         name="costs"
-//         options={{
-//           title: 'Costs',
-//           tabBarIcon: ({ color, size }) => (
-//             <Ionicons
-//               name="cash-outline"
-//               size={size}
-//               color={color}
-//             />
-//           ),
-//         }}
-//       />
-//
-//       <Tabs.Screen
-//         name="compare"
-//         options={{
-//           title: 'Compare',
-//           tabBarIcon: ({ color, size }) => (
-//             <Ionicons
-//               name="swap-horizontal-outline"
-//               size={size}
-//               color={color}
-//             />
-//           ),
-//         }}
+      <Tabs.Screen
+        name="building"
+        options={{ title: 'Locate', tabBarIcon: tabIcon('map', 'map-outline') }}
       />
     </Tabs>
   );
