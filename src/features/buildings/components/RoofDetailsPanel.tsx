@@ -1,22 +1,15 @@
-import { Ionicons } from '@expo/vector-icons';
-import type { ComponentProps } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { CloudSlash, HouseLine, MapPinLine, WarningCircle, type Icon } from 'phosphor-react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { colors, shadows } from '@/shared/global.styles';
+import AppText from '@/shared/components/AppText';
+import Button from '@/shared/components/Button';
+import IconBadge, { badgeColor, type BadgeTone } from '@/shared/components/IconBadge';
+import { colors, fonts, radii, shadows } from '@/shared/global.styles';
+import { useI18n } from '@/shared/i18n';
 
 import type { RoofSelectionStatus } from '../types';
 
 const ROUGH_GPS_ACCURACY_M = 25;
-
-type IconName = ComponentProps<typeof Ionicons>['name'];
-
-type Tone = 'success' | 'warning' | 'neutral';
-
-const TONES: Record<Tone, { background: string; foreground: string }> = {
-  success: { background: colors.greenBackground, foreground: colors.green },
-  warning: { background: colors.warningBackground, foreground: colors.warningTitle },
-  neutral: { background: colors.inactiveTab, foreground: colors.secondaryText },
-};
 
 type Props = {
   status: RoofSelectionStatus;
@@ -33,6 +26,7 @@ export default function RoofDetailsPanel({
   onLocate,
   onOpenSettings,
 }: Props) {
+  const { s, fill } = useI18n();
   const isRoofStep =
     status.kind === 'loadingRoof' || status.kind === 'roofFound' || status.kind === 'noBuilding';
   const isDisabled =
@@ -41,95 +35,93 @@ export default function RoofDetailsPanel({
   return (
     <View style={styles.container}>
       <View style={styles.handle} />
-
       <PanelContent status={status} gpsAccuracyM={gpsAccuracyM} onOpenSettings={onOpenSettings} />
-
-      <Pressable
+      <Button
+        label={isRoofStep ? s.locate.useRoof : s.locate.useLocation}
         onPress={status.kind === 'roofFound' ? onUseRoof : onLocate}
-        disabled={isDisabled}
-        style={({ pressed }) => [
-          styles.button,
-          isDisabled && styles.buttonDisabled,
-          pressed && styles.buttonPressed,
-        ]}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: isDisabled }}
-      >
-        <Text style={styles.buttonText}>{isRoofStep ? 'Use this roof' : 'Use my location'}</Text>
-      </Pressable>
+        isDisabled={isDisabled}
+      />
+      {status.kind === 'roofFound' &&
+      gpsAccuracyM !== null &&
+      gpsAccuracyM > ROUGH_GPS_ACCURACY_M ? (
+        <AppText variant="caption" align="center">
+          {fill(s.locate.roughGps, { value: Math.round(gpsAccuracyM) })}
+        </AppText>
+      ) : null}
     </View>
   );
 }
 
-type PanelContentProps = Pick<Props, 'status' | 'gpsAccuracyM' | 'onOpenSettings'>;
+function PanelContent({
+  status,
+  onOpenSettings,
+}: Pick<Props, 'status' | 'gpsAccuracyM' | 'onOpenSettings'>) {
+  const { s, number } = useI18n();
 
-function PanelContent({ status, gpsAccuracyM, onOpenSettings }: PanelContentProps) {
   switch (status.kind) {
     case 'roofFound':
       return (
         <>
           <PanelHeading
-            icon="home"
-            tone="success"
-            title="Roof found under the pin"
-            subtitle="Outline from IGN BD TOPO, measured from above"
+            icon={HouseLine}
+            tone="teal"
+            title={s.locate.foundTitle}
+            subtitle={s.locate.foundSubtitle}
           />
           <View style={styles.areaRow}>
-            <Text style={styles.area}>{Math.round(status.roof.building.roofAreaM2)} m²</Text>
-            <Text style={styles.hint}>
-              {gpsAccuracyM !== null && gpsAccuracyM > ROUGH_GPS_ACCURACY_M
-                ? `GPS is accurate to about ${Math.round(gpsAccuracyM)} m. Drag the map if this is not your roof.`
-                : 'Not your home? Tap another roof'}
-            </Text>
+            <AppText variant="number">{number(status.roof.building.roofAreaM2)} m²</AppText>
+            <AppText variant="label" style={styles.hint}>
+              {s.locate.tapAnother}
+            </AppText>
           </View>
         </>
       );
     case 'loadingRoof':
       return (
         <PanelHeading
-          tone="neutral"
-          title="Reading the roof"
-          subtitle="Looking up the building outline under the pin"
+          tone="sand"
+          title={s.locate.loadingTitle}
+          subtitle={s.locate.loadingSubtitle}
         />
       );
     case 'locating':
       return (
         <PanelHeading
-          tone="neutral"
-          title="Finding your location"
-          subtitle="Allow location access to jump to your house"
+          tone="sand"
+          title={s.locate.locatingTitle}
+          subtitle={s.locate.locatingSubtitle}
         />
       );
     case 'noBuilding':
       return (
         <PanelHeading
-          icon="alert-circle-outline"
-          tone="warning"
-          title="No building under the pin"
-          subtitle="Drag the map so the pin sits on your roof"
+          icon={WarningCircle}
+          tone="brick"
+          title={s.locate.noneTitle}
+          subtitle={s.locate.noneSubtitle}
         />
       );
     case 'unavailable':
       return (
         <PanelHeading
-          icon="cloud-offline-outline"
-          tone="warning"
-          title="Could not reach the map service"
-          subtitle="Check your connection, then move the map to try again"
+          icon={CloudSlash}
+          tone="brick"
+          title={s.locate.offlineTitle}
+          subtitle={s.locate.offlineSubtitle}
         />
       );
     case 'locationDenied':
       return (
         <>
           <PanelHeading
-            icon="location-outline"
-            tone="warning"
-            title="Location is off"
-            subtitle="Search your address above, or drag the map onto your roof"
+            icon={MapPinLine}
+            tone="brick"
+            title={s.locate.deniedTitle}
+            subtitle={s.locate.deniedSubtitle}
           />
           {!status.canAskAgain && (
             <Pressable onPress={onOpenSettings} hitSlop={8} accessibilityRole="link">
-              <Text style={styles.link}>Open settings to allow location</Text>
+              <AppText style={styles.link}>{s.locate.openSettings}</AppText>
             </Pressable>
           )}
         </>
@@ -137,37 +129,35 @@ function PanelContent({ status, gpsAccuracyM, onOpenSettings }: PanelContentProp
     case 'idle':
       return (
         <PanelHeading
-          icon="home-outline"
-          tone="success"
-          title="Where is your home?"
-          subtitle="Use your location or search your address, then fine-tune the pin on your roof"
+          icon={HouseLine}
+          tone="teal"
+          title={s.locate.idleTitle}
+          subtitle={s.locate.idleSubtitle}
         />
       );
   }
 }
 
 type PanelHeadingProps = {
-  icon?: IconName;
-  tone: Tone;
+  icon?: Icon;
+  tone: BadgeTone;
   title: string;
   subtitle: string;
 };
 
 function PanelHeading({ icon, tone, title, subtitle }: PanelHeadingProps) {
-  const { background, foreground } = TONES[tone];
-
   return (
     <View style={styles.heading}>
-      <View style={[styles.iconContainer, { backgroundColor: background }]}>
-        {icon ? (
-          <Ionicons name={icon} size={24} color={foreground} />
-        ) : (
-          <ActivityIndicator color={foreground} />
-        )}
-      </View>
+      {icon ? (
+        <IconBadge icon={icon} tone={tone} size={44} />
+      ) : (
+        <View style={styles.loader}>
+          <ActivityIndicator color={badgeColor(tone)} />
+        </View>
+      )}
       <View style={styles.headingText}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
+        <AppText variant="subtitle">{title}</AppText>
+        <AppText variant="caption">{subtitle}</AppText>
       </View>
     </View>
   );
@@ -179,91 +169,50 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    gap: 14,
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 20,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    paddingBottom: 18,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     backgroundColor: colors.background,
     ...shadows.floating,
   },
   handle: {
     alignSelf: 'center',
     width: 40,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: 16,
+    height: 5,
+    borderRadius: 3,
     backgroundColor: colors.cardBorder,
   },
   heading: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 12,
   },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+  loader: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.icon,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.inactiveTab,
   },
   headingText: {
     flex: 1,
-  },
-  title: {
-    color: colors.primaryText,
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  subtitle: {
-    color: colors.secondaryText,
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 2,
   },
   areaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 16,
-    marginTop: 18,
-  },
-  area: {
-    color: colors.primaryText,
-    fontSize: 34,
-    fontWeight: '800',
-    letterSpacing: -0.5,
   },
   hint: {
     flex: 1,
     textAlign: 'right',
-    color: colors.secondaryText,
-    fontSize: 13,
-    lineHeight: 18,
   },
   link: {
-    marginTop: 12,
+    fontFamily: fonts.semibold,
     color: colors.buttons,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  button: {
-    height: 56,
-    marginTop: 20,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.buttons,
-  },
-  buttonDisabled: {
-    opacity: 0.45,
-  },
-  buttonPressed: {
-    opacity: 0.85,
-  },
-  buttonText: {
-    color: colors.buttonText,
-    fontSize: 17,
-    fontWeight: '700',
   },
 });

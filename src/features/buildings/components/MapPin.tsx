@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { MapPin as MapPinIcon } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 
@@ -31,7 +31,7 @@ export default function MapPin({ isLifted }: Props) {
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <Animated.View style={[styles.shadow, { transform: [{ scaleX: shadowScale }] }]} />
       <Animated.View style={[styles.pin, { transform: [{ translateY }] }]}>
-        <Ionicons name="location" size={PIN_SIZE} color={colors.warningTitle} style={styles.icon} />
+        <MapPinIcon size={PIN_SIZE} weight="fill" color={colors.warningTitle} />
       </Animated.View>
     </View>
   );
@@ -46,11 +46,6 @@ const styles = StyleSheet.create({
     height: PIN_SIZE,
     marginLeft: -PIN_SIZE / 2,
     marginTop: -PIN_SIZE + PIN_TIP_OFFSET,
-  },
-  icon: {
-    textShadowColor: 'rgba(0, 0, 0, 0.35)',
-    textShadowRadius: 4,
-    textShadowOffset: { width: 0, height: 1 },
   },
   shadow: {
     position: 'absolute',

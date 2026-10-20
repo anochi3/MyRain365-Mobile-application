@@ -3,40 +3,71 @@ import { StyleSheet } from 'react-native';
 export const colors = {
   background: '#F7F5F0',
 
-  primaryText: '#1B222D',
-  secondaryText: '#5B6678',
+  primaryText: '#1C2430',
+  secondaryText: '#5B6573',
 
   iconBackground: '#FFFEFC',
-  iconText: '#1B222D',
+  iconText: '#1C2430',
 
-  buttons: '#1E527F',
+  buttons: '#1F4E79',
   buttonText: '#FFFFFF',
+  blueSoft: '#E3ECF5',
+  blueBorder: '#CFDDEC',
 
-  warningTitle: '#CF4D2A',
+  warningTitle: '#C2502E',
   warningBackground: '#F8E6DE',
-  warningBorder: '#EFD1C5',
+  warningBorder: '#EECDBF',
 
-  green: '#218579',
-  greenBackground: '#DFF0EC',
+  teal: '#2A9D8F',
+  green: '#1E7A70',
+  greenBackground: '#E1F1EE',
 
-  labelText: '#5B6678',
-  cardBorder: '#E6E2DB',
+  labelText: '#5B6573',
+  cardBorder: '#E6E1D8',
   cardBackground: '#FFFEFC',
 
   inactiveTab: '#EFEBE3',
   activeTab: '#FFFEFC',
 
   mapBackground: '#2B2F2A',
-  shadow: '#000000',
+  mapOverlay: '#0E1928',
+  shadow: '#1C2430',
+};
+
+export const fonts = {
+  regular: 'Geist_400Regular',
+  medium: 'Geist_500Medium',
+  semibold: 'Geist_600SemiBold',
+  bold: 'Geist_700Bold',
+  extrabold: 'Geist_800ExtraBold',
+};
+
+export const radii = {
+  card: 20,
+  tile: 14,
+  icon: 12,
+  pill: 999,
+};
+
+export const spacing = {
+  screen: 20,
+  gap: 12,
 };
 
 export const shadows = StyleSheet.create({
   floating: {
     shadowColor: colors.shadow,
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
     elevation: 5,
+  },
+  raised: {
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
   },
 });
 
@@ -45,16 +76,16 @@ export const globalStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     paddingTop: 60,
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing.screen,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: colors.primaryText,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.secondaryText,
     marginTop: 30,
     marginBottom: 16,

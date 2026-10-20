@@ -1,3 +1,4 @@
+import type { RoofMaterial } from '@/data/store/projectTypes';
 import {
   distanceToRingDegrees,
   isInsideRing,
@@ -137,4 +138,58 @@ export async function findBuildingAt(
   }
 
   return nearest && nearestDistance <= MAX_DISTANCE_TO_BUILDING_DEG ? toBuilding(nearest) : null;
+}
+
+const AERIAL_WMS_URL =
+  `${GEOPLATEFORME_URL}/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap` +
+  '&LAYERS=ORTHOIMAGERY.ORTHOPHOTOS&STYLES=&CRS=EPSG:4326&FORMAT=image/jpeg';
+
+export type GeoBounds = {
+  south: number;
+  west: number;
+  north: number;
+  east: number;
+};
+
+export function boundsAround(outline: Ring, paddingShare: number, aspectRatio: number): GeoBounds {
+  const longitudes = outline.map(([longitude]) => longitude);
+  const latitudes = outline.map(([, latitude]) => latitude);
+  const centerLon = (Math.min(...longitudes) + Math.max(...longitudes)) / 2;
+  const centerLat = (Math.min(...latitudes) + Math.max(...latitudes)) / 2;
+  const lonScale = Math.cos((centerLat * Math.PI) / 180);
+  let halfWidth = ((Math.max(...longitudes) - Math.min(...longitudes)) * lonScale) / 2;
+  let halfHeight = (Math.max(...latitudes) - Math.min(...latitudes)) / 2;
+  halfWidth *= 1 + paddingShare;
+  halfHeight *= 1 + paddingShare;
+  if (halfWidth / halfHeight > aspectRatio) {
+    halfHeight = halfWidth / aspectRatio;
+  } else {
+    halfWidth = halfHeight * aspectRatio;
+  }
+  return {
+    south: centerLat - halfHeight,
+    north: centerLat + halfHeight,
+    west: centerLon - halfWidth / lonScale,
+    east: centerLon + halfWidth / lonScale,
+  };
+}
+
+export function aerialImageUrl(
+  { south, west, north, east }: GeoBounds,
+  width: number,
+  height: number,
+): string {
+  return `${AERIAL_WMS_URL}&BBOX=${south},${west},${north},${east}&WIDTH=${Math.round(width)}&HEIGHT=${Math.round(height)}`;
+}
+
+const IGN_MATERIAL_BY_DIGIT: Record<string, RoofMaterial> = {
+  '1': 'tiles',
+  '2': 'slate',
+  '3': 'metal',
+  '4': 'flat',
+};
+
+export function materialFromIgnCode(code: string | null): RoofMaterial | null {
+  if (!code || code === '00') return null;
+  return IGN_MATERIAL_BY_DIGIT[code[0]] ?? null;
 }

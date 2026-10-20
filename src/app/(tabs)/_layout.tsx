@@ -1,11 +1,16 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import type { ComponentProps } from 'react';
+import {
+  Bell,
+  ChartBar,
+  DropHalfBottom,
+  GearSix,
+  MapTrifold,
+  type Icon,
+} from 'phosphor-react-native';
 import type { ColorValue } from 'react-native';
 
-import { colors } from '@/shared/global.styles';
-
-type IconName = ComponentProps<typeof Ionicons>['name'];
+import { colors, fonts } from '@/shared/global.styles';
+import { useI18n } from '@/shared/i18n';
 
 type TabBarIconProps = {
   color: ColorValue;
@@ -13,15 +18,18 @@ type TabBarIconProps = {
   focused: boolean;
 };
 
-function tabIcon(active: IconName, inactive: IconName) {
-  return function TabBarIcon({ color, size, focused }: TabBarIconProps) {
-    return <Ionicons name={focused ? active : inactive} size={size} color={color} />;
+function tabIcon(IconComponent: Icon) {
+  return function TabBarIcon({ color, focused }: TabBarIconProps) {
+    return <IconComponent size={24} color={String(color)} weight={focused ? 'fill' : 'regular'} />;
   };
 }
 
 export default function TabLayout() {
+  const { s } = useI18n();
+
   return (
     <Tabs
+      initialRouteName="results"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.buttons,
@@ -35,17 +43,26 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '500',
+          fontFamily: fonts.medium,
         },
       }}
     >
       <Tabs.Screen
-        name="index"
-        options={{ title: 'Overview', tabBarIcon: tabIcon('home', 'home-outline') }}
+        name="building"
+        options={{ title: s.tabs.locate, tabBarIcon: tabIcon(MapTrifold) }}
       />
       <Tabs.Screen
-        name="building"
-        options={{ title: 'Locate', tabBarIcon: tabIcon('map', 'map-outline') }}
+        name="results"
+        options={{ title: s.tabs.results, tabBarIcon: tabIcon(ChartBar) }}
+      />
+      <Tabs.Screen
+        name="tank"
+        options={{ title: s.tabs.tank, tabBarIcon: tabIcon(DropHalfBottom) }}
+      />
+      <Tabs.Screen name="alerts" options={{ title: s.tabs.alerts, tabBarIcon: tabIcon(Bell) }} />
+      <Tabs.Screen
+        name="settings"
+        options={{ title: s.tabs.settings, tabBarIcon: tabIcon(GearSix) }}
       />
     </Tabs>
   );

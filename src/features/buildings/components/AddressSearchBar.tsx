@@ -1,8 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Crosshair, MagnifyingGlass, MapPin } from 'phosphor-react-native';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { AddressSuggestion } from '@/data/services/ignService';
-import { colors, shadows } from '@/shared/global.styles';
+import { colors, fonts, shadows } from '@/shared/global.styles';
+import { useI18n } from '@/shared/i18n';
 
 const BLUR_DELAY_MS = 150;
 
@@ -31,10 +32,12 @@ export default function AddressSearchBar({
   onSelectSuggestion,
   onLocatePress,
 }: Props) {
+  const { s } = useI18n();
+
   return (
     <View style={styles.container}>
       <View style={styles.bar}>
-        <Ionicons name="search-outline" size={22} color={colors.secondaryText} />
+        <MagnifyingGlass size={20} color={colors.secondaryText} />
 
         <TextInput
           value={value}
@@ -42,12 +45,12 @@ export default function AddressSearchBar({
           onFocus={onFocus}
           onBlur={() => setTimeout(onBlur, BLUR_DELAY_MS)}
           onSubmitEditing={onSubmit}
-          placeholder="Search your address"
+          placeholder={s.locate.search}
           placeholderTextColor={colors.secondaryText}
           returnKeyType="search"
           autoCorrect={false}
           style={styles.input}
-          accessibilityLabel="Search your address"
+          accessibilityLabel={s.locate.search}
         />
 
         <Pressable
@@ -56,12 +59,12 @@ export default function AddressSearchBar({
           hitSlop={6}
           style={({ pressed }) => [styles.locateButton, pressed && styles.pressed]}
           accessibilityRole="button"
-          accessibilityLabel="Use my location"
+          accessibilityLabel={s.locate.useLocation}
         >
           {isLocating ? (
             <ActivityIndicator color={colors.buttons} />
           ) : (
-            <Ionicons name="locate-outline" size={22} color={colors.buttons} />
+            <Crosshair size={22} weight="fill" color={colors.buttons} />
           )}
         </Pressable>
       </View>
@@ -79,7 +82,7 @@ export default function AddressSearchBar({
               ]}
               accessibilityRole="button"
             >
-              <Ionicons name="location-outline" size={18} color={colors.secondaryText} />
+              <MapPin size={18} color={colors.secondaryText} />
               <Text style={styles.suggestionText} numberOfLines={1}>
                 {suggestion.label}
               </Text>
@@ -99,7 +102,7 @@ const styles = StyleSheet.create({
     right: 18,
   },
   bar: {
-    height: 58,
+    height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
@@ -112,16 +115,17 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: colors.primaryText,
-    fontSize: 16,
+    fontFamily: fonts.regular,
+    fontSize: 15,
     paddingVertical: 8,
   },
   locateButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.inactiveTab,
+    backgroundColor: colors.blueSoft,
   },
   pressed: {
     opacity: 0.7,
@@ -150,6 +154,7 @@ const styles = StyleSheet.create({
   suggestionText: {
     flex: 1,
     color: colors.primaryText,
+    fontFamily: fonts.regular,
     fontSize: 15,
   },
 });

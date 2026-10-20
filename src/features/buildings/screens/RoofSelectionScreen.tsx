@@ -2,6 +2,8 @@ import { useRouter } from 'expo-router';
 import { Linking, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { materialFromIgnCode } from '@/data/services/ignService';
+import { useProjectActions } from '@/data/store/ProjectProvider';
 import { colors } from '@/shared/global.styles';
 
 import AddressSearchBar from '../components/AddressSearchBar';
@@ -30,6 +32,7 @@ export default function RoofSelectionScreen() {
     handleMapMoveStart,
     handleMapMoveEnd,
   } = useRoofSelection();
+  const { setBuilding } = useProjectActions();
 
   const confirmRoof = () => {
     if (status.kind !== 'roofFound') {
@@ -37,16 +40,26 @@ export default function RoofSelectionScreen() {
     }
 
     const { building, center, address } = status.roof;
-    router.navigate({
-      pathname: '/',
-      params: {
-        buildingId: building.id,
-        roofAreaM2: String(Math.round(building.roofAreaM2)),
-        latitude: center.latitude.toFixed(6),
-        longitude: center.longitude.toFixed(6),
+    const ignMaterial = materialFromIgnCode(building.roofMaterialCode);
+    setBuilding(
+      {
+        id: building.id,
         address: address ?? '',
+        latitude: center.latitude,
+        longitude: center.longitude,
+        outline: building.outline,
+        footprintM2: building.roofAreaM2,
+        isFlatRoof: building.isFlatRoof,
       },
-    });
+      {
+        areaM2: building.roofAreaM2,
+        drainedShare: 1,
+        material: ignMaterial ?? (building.isFlatRoof ? 'flat' : 'tiles'),
+        materialSource: ignMaterial ? 'ign' : 'user',
+        materialConfidence: null,
+      },
+    );
+    router.push('/setup/roof');
   };
 
   return (
