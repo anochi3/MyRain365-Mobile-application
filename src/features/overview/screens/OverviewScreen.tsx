@@ -2,6 +2,11 @@
 import { Text, View, StyleSheet } from 'react-native';
 import { colors, globalStyles } from '../../../shared/global.styles'
 
+import { useRouter } from 'expo-router';
+import { Button } from 'react-native';
+
+const router = useRouter();
+
 export default function OverviewScreen() {
   return (
     <View style={globalStyles.container}>
@@ -20,6 +25,13 @@ export default function OverviewScreen() {
           Your simulation results will appear here.
         </Text>
       </View>
+
+
+<Button
+  title="Choose a building"
+  onPress={() => router.push('/(tabs)/building')}
+/>
+
     </View>
   );
 }
