@@ -1,3 +1,4 @@
+/** Shared logic of the native and web maps: builds the page once and queues commands until it is ready. */
 import { useImperativeHandle, useRef, useState } from 'react';
 
 import { buildingMapDocument } from '../components/buildingMapDocument';
@@ -21,6 +22,7 @@ export function useMapBridge(
     buildingMapDocument({ center: initialCenter, zoom: initialZoom, outlineColor }),
   );
 
+  // Commands sent before the map page has loaded are kept and delivered once it says "ready".
   const send = (command: MapCommand) => {
     if (isReady.current) {
       deliver(command);
@@ -34,6 +36,7 @@ export function useMapBridge(
     showOutline: (outline) => send({ type: 'showOutline', outline }),
   }));
 
+  // Messages from the map page: ignore anything that is not ours, then dispatch by type.
   const handleMessage = (raw: string) => {
     const message = JSON.parse(raw) as { channel?: string; event?: MapEvent };
     if (message.channel !== MAP_EVENT_CHANNEL || !message.event) {

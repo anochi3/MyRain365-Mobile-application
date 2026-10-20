@@ -1,3 +1,4 @@
+/** Builds the HTML of the PDF report from the project and its results, in the user's language. */
 import type { ProjectResults } from '@/data/hooks/useProjectResults';
 import type { Preferences, Project } from '@/data/store/projectTypes';
 import { colors } from '@/shared/global.styles';

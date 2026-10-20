@@ -1,3 +1,4 @@
+/** Shows loading, missing-building and offline states, and the screen content once results exist. */
 import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 

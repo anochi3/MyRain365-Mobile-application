@@ -1,3 +1,4 @@
+/** Why the top recommendation: reason, figures, downsides, what could change it, next steps. */
 import {
   ArrowsClockwise,
   ChartBar,

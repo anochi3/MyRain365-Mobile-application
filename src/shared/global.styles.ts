@@ -1,3 +1,4 @@
+/** Design tokens from the Figma file: Rain & brick colours, Geist fonts, corner radii and shadows. */
 import { StyleSheet } from 'react-native';
 
 export const colors = {

@@ -1,3 +1,4 @@
+/** Builds the alert list from the forecast, the tank estimate, the upkeep calendar and the settings. */
 import {
   CloudRain,
   CurrencyEur,
@@ -26,10 +27,14 @@ export type AppAlert = {
   when: string;
 };
 
+// 10 mm or more in a day counts as heavy rain.
 const HEAVY_RAIN_MM = 10;
+// Warn when the tank would not cover three days of a water cut.
 const WATER_CUT_COMFORT_DAYS = 3;
+// The gutter filter should be cleaned every six months.
 const FILTER_INTERVAL_MONTHS = 6;
 
+/** Whole months between a date and today. */
 const monthsBetween = (from: string, to: Date) =>
   (to.getFullYear() - Number(from.slice(0, 4))) * 12 + to.getMonth() + 1 - Number(from.slice(5, 7));
 

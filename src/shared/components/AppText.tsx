@@ -1,3 +1,4 @@
+/** Text with the Figma type styles (display, heading, title, subtitle, body, label, number, stat, caption). */
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
 import { colors, fonts } from '@/shared/global.styles';

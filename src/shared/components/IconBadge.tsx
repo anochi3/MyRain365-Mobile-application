@@ -1,3 +1,4 @@
+/** Coloured square (or circle) holding an icon. */
 import type { Icon } from 'phosphor-react-native';
 import { StyleSheet, View } from 'react-native';
 

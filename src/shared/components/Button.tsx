@@ -1,3 +1,4 @@
+/** Pill button: primary (filled blue), secondary (blue outline) or quiet (grey outline). */
 import type { Icon } from 'phosphor-react-native';
 import {
   ActivityIndicator,

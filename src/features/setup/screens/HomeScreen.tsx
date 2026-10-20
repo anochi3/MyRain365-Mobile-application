@@ -1,3 +1,4 @@
+/** Step 2: people in the home and what the rainwater will be used for. */
 import { useRouter } from 'expo-router';
 import { Broom, Drop, Plant, Toilet, WashingMachine, type Icon } from 'phosphor-react-native';
 import { StyleSheet, View } from 'react-native';

@@ -1,3 +1,4 @@
+/** How the tank behaves: average level through the year, reliability, shortage, overflow and fill. */
 import { StyleSheet } from 'react-native';
 
 import { useProjectStore } from '@/data/store/ProjectProvider';

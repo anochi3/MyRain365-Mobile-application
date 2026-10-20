@@ -1,3 +1,4 @@
+/** Results summary: verdict, coverage, key figures, water-cut card and links to every detail page. */
 import { useRouter, type Href } from 'expo-router';
 import {
   ChartLineUp,
@@ -81,6 +82,7 @@ function ResultsContent({ results }: { results: ProjectResults }) {
   const { simulation, own, shared, verdict, waterCut } = results;
   const { typical } = simulation;
 
+  // Headline: limited if the water rating is weak, "not alone" when sharing is the better deal.
   const headline = !verdict.feasible
     ? s.results.notFeasible
     : verdict.bestOption === 'shared'
@@ -92,6 +94,7 @@ function ResultsContent({ results }: { results: ProjectResults }) {
   const uses = activeUses(project.household)
     .map((use, index) => (index === 0 ? s.home.uses[use] : s.home.uses[use].toLowerCase()))
     .join(', ');
+  // The "if shared" hint only appears for a courée or a shared site.
   const canShare = project.site.isCouree || project.site.kind === 'shared';
 
   return (

@@ -1,3 +1,4 @@
+/** Row with an icon, a title, a subtitle and something on the right (toggle, chevron, value). */
 import { CaretRight, type Icon } from 'phosphor-react-native';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';

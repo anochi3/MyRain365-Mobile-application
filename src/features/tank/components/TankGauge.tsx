@@ -1,3 +1,4 @@
+/** Drawing of a tank filled to the current level. */
 import { StyleSheet, View } from 'react-native';
 
 import { colors } from '@/shared/global.styles';

@@ -1,3 +1,8 @@
+/**
+ * The app's memory: the user's project (building, roof, household, site, water use) and preferences
+ * (language, sewer charge, notifications). Kept in a React context, changed only through the actions
+ * below, and saved on the phone so it survives closing the app.
+ */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   createContext,
@@ -22,6 +27,7 @@ import type {
   Site,
 } from './projectTypes';
 
+// Key under which the whole state is saved on the phone (the version lets us change the format later).
 const STORAGE_KEY = 'myrain365:state:v1';
 
 type State = {
@@ -29,6 +35,7 @@ type State = {
   preferences: Preferences;
 };
 
+/** Every change the app can make to the state. */
 type Action =
   | { type: 'hydrate'; state: State }
   | { type: 'setBuilding'; building: Building; roof: Partial<Roof> }
@@ -45,6 +52,7 @@ type Action =
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+/** Returns the new state for an action; it never edits the old state in place. */
 function reducer(state: State, action: Action): State {
   const { project } = state;
   const withProject = (next: Partial<Project>): State => ({
@@ -55,6 +63,7 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'hydrate':
       return action.state;
+    // A new building starts a new analysis, so the previous completion is cleared.
     case 'setBuilding':
       return withProject({
         building: action.building,
@@ -83,8 +92,10 @@ function reducer(state: State, action: Action): State {
       });
     case 'setTank':
       return withProject({ tankLitres: action.tankLitres });
+    // Marks the analysis as done; the first completion date is kept as the installation date.
     case 'complete':
       return withProject({ completedAt: today(), installedOn: project.installedOn ?? today() });
+    // The example project (a real Roubaix courée house) used by "See an example first".
     case 'loadExample':
       return {
         ...state,
@@ -114,6 +125,7 @@ type ProjectContextValue = State & {
 
 const ProjectContext = createContext<ProjectContextValue | null>(null);
 
+/** Wraps the app, loads the saved state once at start, and saves every change afterwards. */
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, {
     project: emptyProject,
@@ -149,6 +161,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
 }
 
+/** Read the project, the preferences and whether the saved state has finished loading. */
 export function useProjectStore(): ProjectContextValue {
   const context = useContext(ProjectContext);
   if (!context) {
@@ -157,6 +170,7 @@ export function useProjectStore(): ProjectContextValue {
   return context;
 }
 
+/** Named actions for screens (stable functions, safe to use in effects). */
 export function useProjectActions() {
   const { dispatch } = useProjectStore();
 

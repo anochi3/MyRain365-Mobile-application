@@ -1,3 +1,4 @@
+/** Locate tab: find the home on the aerial map and confirm its roof, then continue to the setup. */
 import { useRouter } from 'expo-router';
 import { Linking, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

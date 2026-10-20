@@ -1,3 +1,4 @@
+/** EN / FR switch shown in the top right of most screens. */
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useProjectActions, useProjectStore } from '@/data/store/ProjectProvider';

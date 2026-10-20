@@ -1,3 +1,4 @@
+/** First screen: aerial photo of a Roubaix street behind the title, three ways to start. */
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -14,6 +15,7 @@ import LanguageToggle from '@/shared/components/LanguageToggle';
 import { colors, fonts } from '@/shared/global.styles';
 import { useI18n } from '@/shared/i18n';
 
+// The background shows Rue des Fabricants in Roubaix, about 270 m from top to bottom.
 const BACKDROP_CENTER = { latitude: 50.6904, longitude: 3.1705 };
 const BACKDROP_HALF_HEIGHT_DEG = 0.0012;
 
@@ -23,6 +25,9 @@ export default function WelcomeScreen() {
   const { updateSite, loadExample } = useProjectActions();
   const { width, height } = useWindowDimensions();
 
+  // Half-width of the photo in degrees so it matches the screen shape:
+  // half-height × (screen width ÷ screen height) ÷ cos(latitude), because a degree of longitude is
+  // shorter than a degree of latitude away from the equator.
   const halfWidth =
     (BACKDROP_HALF_HEIGHT_DEG * width) /
     height /

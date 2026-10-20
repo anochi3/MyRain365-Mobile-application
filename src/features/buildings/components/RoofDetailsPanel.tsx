@@ -1,3 +1,4 @@
+/** Bottom sheet of the Locate tab: what is under the pin (roof found, searching, nothing there, location off). */
 import { CloudSlash, HouseLine, MapPinLine, WarningCircle, type Icon } from 'phosphor-react-native';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 

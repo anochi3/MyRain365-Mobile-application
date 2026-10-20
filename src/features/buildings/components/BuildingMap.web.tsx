@@ -1,3 +1,4 @@
+/** Web map: the same Leaflet page in an iframe; messages travel with window.postMessage. */
 import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 

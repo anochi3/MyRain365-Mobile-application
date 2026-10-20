@@ -1,3 +1,4 @@
+/** Pin fixed at the centre of the map. It lifts while the map moves and drops with a bounce when it stops. */
 import { MapPin as MapPinIcon } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
@@ -5,6 +6,7 @@ import { Animated, StyleSheet, View } from 'react-native';
 import { colors } from '@/shared/global.styles';
 
 const PIN_SIZE = 48;
+// The tip of the pin icon sits 4 px above the bottom of its box; this puts the tip exactly on the map centre.
 const PIN_TIP_OFFSET = 4;
 const LIFT_HEIGHT = 14;
 
@@ -15,6 +17,7 @@ type Props = {
 export default function MapPin({ isLifted }: Props) {
   const [lift] = useState(() => new Animated.Value(0));
 
+  // Animate between resting (0) and lifted (1): quick and flat going up, springy coming down.
   useEffect(() => {
     Animated.spring(lift, {
       toValue: isLifted ? 1 : 0,

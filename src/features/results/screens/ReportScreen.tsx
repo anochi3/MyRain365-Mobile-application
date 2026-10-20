@@ -1,3 +1,4 @@
+/** Preview of the report, what the PDF contains, and buttons to download or share it. */
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { Bank, CheckSquare, Drop, FilePdf, UsersThree } from 'phosphor-react-native';

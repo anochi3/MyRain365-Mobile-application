@@ -1,3 +1,4 @@
+/** Settings: language, home, sewer charge, notifications, privacy, sources, start again. */
 import { useRouter } from 'expo-router';
 import { Bell, CurrencyEur, HouseLine, Info, ShieldCheck, Translate } from 'phosphor-react-native';
 import { StyleSheet, View } from 'react-native';

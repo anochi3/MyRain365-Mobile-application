@@ -1,3 +1,4 @@
+/** Every state the Locate bottom sheet can be in. */
 import type { Building } from '@/data/services/ignService';
 import type { Coordinates } from '@/shared/geo';
 

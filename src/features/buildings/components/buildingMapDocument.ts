@@ -1,3 +1,7 @@
+/**
+ * The HTML page that runs the Leaflet map with IGN aerial tiles. It reports when the map starts and
+ * stops moving (and whether the user caused it), flies to points and draws the building outline.
+ */
 import {
   IGN_AERIAL_MAX_ZOOM,
   IGN_AERIAL_TILE_URL,
@@ -10,6 +14,7 @@ import { MAP_COMMAND_CHANNEL, MAP_EVENT_CHANNEL } from './buildingMap.types';
 
 const LEAFLET_URL = 'https://unpkg.com/leaflet@1.9.4/dist';
 const MAX_ZOOM = 20;
+// Length of the flight to a GPS or searched position, and of the pan when tapping another roof.
 const FLY_DURATION_S = 1.1;
 const TAP_PAN_DURATION_S = 0.4;
 
@@ -19,6 +24,11 @@ type DocumentOptions = {
   outlineColor: string;
 };
 
+/**
+ * Settings are passed into the page as one JSON object so the page needs no other input.
+ * Inside the page, a move counts as user-initiated when it follows a touch, a click, a mouse wheel or
+ * a flight we asked for; the app only reads the roof after such moves.
+ */
 export function buildingMapDocument({ center, zoom, outlineColor }: DocumentOptions): string {
   const config = JSON.stringify({
     center: [center.latitude, center.longitude],

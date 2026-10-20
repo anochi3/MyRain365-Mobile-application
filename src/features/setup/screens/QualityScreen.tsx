@@ -1,3 +1,4 @@
+/** Step 4: intended use, roof condition, nearby pollution and the access needs of the people using it. */
 import { useRouter } from 'expo-router';
 import { Drop, HandTap, Wheelchair, Wrench, UsersThree, type Icon } from 'phosphor-react-native';
 import { StyleSheet, View } from 'react-native';

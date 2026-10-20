@@ -1,3 +1,4 @@
+/** Shapes of the data the user enters and the app stores. */
 import type { LonLat } from '@/shared/geo';
 
 export type Language = 'en' | 'fr';
@@ -28,6 +29,7 @@ export type Building = {
   isFlatRoof: boolean | null;
 };
 
+/** areaM2: footprint seen from above. drainedShare: share of that area whose gutters reach the tank (0 to 1). */
 export type Roof = {
   areaM2: number;
   material: RoofMaterial;
@@ -41,6 +43,7 @@ export type Household = {
   uses: Record<WaterUse, boolean>;
 };
 
+/** Where the home is and how much room there is for a tank. */
 export type Site = {
   kind: SiteKind;
   isCouree: boolean;
@@ -53,6 +56,7 @@ export type Quality = {
   pollution: PollutionSource;
 };
 
+/** Everything about the user's home that the results are calculated from. */
 export type Project = {
   building: Building | null;
   roof: Roof;

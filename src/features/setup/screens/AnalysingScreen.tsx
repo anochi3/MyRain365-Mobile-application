@@ -1,3 +1,4 @@
+/** Shows each data source being fetched, then opens the results as soon as the simulation is ready. */
 import { useRouter } from 'expo-router';
 import { Check, CircleNotch } from 'phosphor-react-native';
 import { useEffect } from 'react';
@@ -13,6 +14,7 @@ import Screen from '@/shared/components/Screen';
 import { colors, radii } from '@/shared/global.styles';
 import { useI18n } from '@/shared/i18n';
 
+// Ten years from 2015 to 2024, including leap days.
 const SIMULATED_DAYS = 3653;
 
 export default function AnalysingScreen() {
@@ -22,6 +24,7 @@ export default function AnalysingScreen() {
   const { complete } = useProjectActions();
   const isReady = results.status === 'ready';
 
+  // As soon as the results are ready, mark the analysis complete and open them.
   useEffect(() => {
     if (!isReady) return;
     complete();

@@ -1,3 +1,4 @@
+/** Frame of every results detail page: back button, title and the results gate. */
 import type { ReactNode } from 'react';
 
 import type { ProjectResults } from '@/data/hooks/useProjectResults';

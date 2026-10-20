@@ -1,3 +1,4 @@
+/** Ranked list of what to do, each with its key figure. */
 import { useRouter } from 'expo-router';
 import {
   ArrowsInLineVertical,

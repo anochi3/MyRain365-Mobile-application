@@ -1,3 +1,4 @@
+/** Measures the available width so charts can be drawn to fit any phone. */
 import { useState, type ReactNode } from 'react';
 import { View, type LayoutChangeEvent } from 'react-native';
 

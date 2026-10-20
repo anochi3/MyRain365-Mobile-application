@@ -1,3 +1,4 @@
+/** Alerts tab with filters (all, weather, tank, courée). */
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 

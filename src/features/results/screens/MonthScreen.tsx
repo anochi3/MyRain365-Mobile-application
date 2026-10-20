@@ -1,3 +1,4 @@
+/** Month-by-month water balance for a typical, dry or wet year, plus the three scenario donuts. */
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 

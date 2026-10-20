@@ -1,3 +1,4 @@
+/** Rounded card and smaller tile, with tones for selected, accent, warning, info and sand. */
 import { StyleSheet, View, type ViewProps } from 'react-native';
 
 import { colors, radii } from '@/shared/global.styles';

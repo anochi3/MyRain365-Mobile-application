@@ -1,3 +1,4 @@
+/** Starting values for a new project, the default preferences, and the example project. */
 import { DEFAULT_TANK_L } from '@/data/calculations/constants';
 
 import type { Preferences, Project } from './projectTypes';
@@ -40,6 +41,7 @@ export const defaultPreferences: Preferences = {
   notifications: { weather: true, tank: true, maintenance: true, neighbours: true },
 };
 
+/** 48 Rue des Fabricants, Roubaix: real IGN outline (104 m², tiles), 3 people, part of a courée. */
 export const exampleProject: Project = {
   ...emptyProject,
   building: {

@@ -1,3 +1,4 @@
+/** My tank: estimated level today, next three days of rain, advice, savings and water-cut autonomy. */
 import { useRouter } from 'expo-router';
 import { Info, Lifebuoy } from 'phosphor-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -47,6 +48,8 @@ function TankContent({ tank }: { tank: TankStatus }) {
   const { preferences } = useProjectStore();
   const weekday = (iso: string) => date(iso, { weekday: 'short' });
 
+  // One piece of advice: use water before an overflow, warn when almost empty, otherwise all is fine.
+  // The litres to use are rounded up to the next 50 L.
   const advice = tank.overflowDay
     ? {
         title: fill(s.tank.adviceOverflow, {

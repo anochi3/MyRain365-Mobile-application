@@ -1,3 +1,4 @@
+/** Ring chart with the percentage in the middle. */
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 
 import { colors, fonts } from '@/shared/global.styles';
@@ -19,6 +20,7 @@ export default function Donut({
 }: Props) {
   const center = size / 2;
   const radius = center - strokeWidth / 2 - 2;
+  // The coloured arc is drawn as a dash whose length is fraction × circumference, starting at 12 o'clock.
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.max(0, Math.min(1, fraction));
 

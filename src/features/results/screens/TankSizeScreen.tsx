@@ -1,3 +1,4 @@
+/** Needs covered for each tank size, the recommended size, and a button to switch to it. */
 import { StyleSheet, View } from 'react-native';
 
 import { WALL_TANK_MAX_L } from '@/data/calculations/constants';
@@ -23,9 +24,11 @@ export default function TankSizeScreen() {
     <ResultDetail title={s.tankSize.title}>
       {({ simulation }) => {
         const { bySize } = simulation;
+        // Recommended size (wall tanks are limited to 1,000 L) and the next size up, to show the gain.
         const best = recommendedTank(bySize, maxLitres);
         const bigger = bySize.find((option) => option.tankLitres > best.tankLitres);
         const coverages = bySize.map((option) => option.coverage);
+        // Chart range: round the lowest and highest coverage to the nearest 10% with a little margin.
         const low = Math.max(0, Math.floor(Math.min(...coverages) * 10) / 10 - 0.1);
         const high = Math.min(1, Math.ceil(Math.max(...coverages) * 10) / 10 + 0.05);
         const others = bySize.filter((option) => option.tankLitres !== best.tankLitres);

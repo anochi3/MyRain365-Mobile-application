@@ -1,3 +1,4 @@
+/** State of the Locate tab: GPS, search, map movement, and the building currently under the pin. */
 import { useRef, useState } from 'react';
 import { Keyboard } from 'react-native';
 
@@ -12,6 +13,7 @@ import { useAddressSuggestions } from './useAddressSuggestions';
 export const INITIAL_MAP_CENTER: Coordinates = { latitude: 50.6901, longitude: 3.1817 };
 export const INITIAL_MAP_ZOOM = 16;
 
+/** True when a request was cancelled on purpose because a newer one replaced it. */
 const isAbort = (error: unknown) => error instanceof Error && error.name === 'AbortError';
 
 export function useRoofSelection() {
@@ -32,6 +34,8 @@ export function useRoofSelection() {
     roofRequest.current = null;
   };
 
+  // Ask IGN for the building and the address under the pin at the same time. A newer pin position
+  // cancels the previous request, so a slow answer can never overwrite a newer one.
   const loadRoof = async (center: Coordinates) => {
     cancelRoofRequest();
     const controller = new AbortController();
@@ -59,6 +63,7 @@ export function useRoofSelection() {
 
   const handleMapMoveStart = () => setIsMapMoving(true);
 
+  // Only read the roof when the user moved the map (drag, tap, GPS, search), not on a screen resize.
   const handleMapMoveEnd = (center: Coordinates, isUserInitiated: boolean) => {
     setIsMapMoving(false);
     if (isUserInitiated) {
@@ -66,6 +71,7 @@ export function useRoofSelection() {
     }
   };
 
+  // GPS button: ask for permission, then fly to the position. The roof is read when the flight ends.
   const locateDevice = async () => {
     Keyboard.dismiss();
     setIsSearching(false);

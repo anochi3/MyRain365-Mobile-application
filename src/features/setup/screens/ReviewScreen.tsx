@@ -1,3 +1,4 @@
+/** Step 5: summary of every answer with an Edit link back to its step. */
 import { useRouter, type Href } from 'expo-router';
 import { Buildings, Drop, HouseLine, MapPin, UsersThree, type Icon } from 'phosphor-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';

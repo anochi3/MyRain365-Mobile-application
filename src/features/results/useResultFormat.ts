@@ -1,3 +1,4 @@
+/** Formatting helpers for results: percentages, euros, ranges and payback years in the current language. */
 import type { Range, Rating } from '@/data/calculations/finance';
 import { colors } from '@/shared/global.styles';
 import { useI18n } from '@/shared/i18n';

@@ -1,3 +1,4 @@
+/** Every data source behind the results and how reliable the estimate is. */
 import { StyleSheet, View } from 'react-native';
 
 import { RUNOFF_COEFFICIENT } from '@/data/calculations/constants';

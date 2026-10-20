@@ -1,3 +1,4 @@
+/** Standard screen: safe area, title bar with back button and language toggle, scrolling body, fixed footer. */
 import { useRouter } from 'expo-router';
 import { CaretLeft } from 'phosphor-react-native';
 import type { ReactNode } from 'react';

@@ -1,3 +1,4 @@
+/** If mains water stops: how many days the tank lasts, day by day, with advice. */
 import { CalendarBlank, CheckCircle, Info, Warning } from 'phosphor-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -20,6 +21,7 @@ import Legend from '../components/Legend';
 import ResultDetail from '../components/ResultDetail';
 import { useResultFormat } from '../useResultFormat';
 
+// The reserve advice is computed for August, when garden use and dry spells are highest.
 const SUMMER_MONTH = 8;
 
 export default function WaterCutScreen() {
@@ -34,6 +36,7 @@ export default function WaterCutScreen() {
   return (
     <ResultDetail title={s.waterCut.title}>
       {({ simulation }) => {
+        // The cut starts with the tank level that is typical for the current month.
         const startLevel = simulation.typical.months[month - 1].averageLevelL;
         const cut = simulateWaterCut(project.household, startLevel, duration, month);
         const reserve = levelNeededForDays(project.household, duration, SUMMER_MONTH);

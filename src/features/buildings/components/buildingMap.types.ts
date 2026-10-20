@@ -1,3 +1,4 @@
+/** Messages exchanged between the app and the map page, and the props of the map component. */
 import type { Ref } from 'react';
 
 import type { Coordinates, Ring } from '@/shared/geo';

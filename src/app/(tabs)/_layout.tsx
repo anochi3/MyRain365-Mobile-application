@@ -1,3 +1,4 @@
+/** Bottom tab bar from the Figma: Locate, Results, My tank, Alerts, Settings (filled icon when active). */
 import { Tabs } from 'expo-router';
 import {
   Bell,

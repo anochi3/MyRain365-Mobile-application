@@ -1,3 +1,4 @@
+/** Search bar over the map, with address suggestions and the GPS button. */
 import { Crosshair, MagnifyingGlass, MapPin } from 'phosphor-react-native';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 

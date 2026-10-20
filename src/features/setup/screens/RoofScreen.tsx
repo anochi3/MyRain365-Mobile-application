@@ -1,3 +1,4 @@
+/** Step 1: aerial view of the roof, its area (editable), the share draining to the tank and the material. */
 import { useRouter } from 'expo-router';
 import { Info, Sparkle } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
@@ -29,6 +30,7 @@ export default function RoofScreen() {
   const [isEditingArea, setIsEditingArea] = useState(false);
   const [areaText, setAreaText] = useState(String(Math.round(roof.areaM2)));
 
+  // If the roof model is available and the user has not chosen a material, ask the model.
   useEffect(() => {
     if (!building || !isRoofModelAvailable || roof.materialSource === 'user') return;
     const controller = new AbortController();
@@ -46,6 +48,7 @@ export default function RoofScreen() {
     return () => controller.abort();
   }, [building, roof.materialSource, updateRoof]);
 
+  // Accept a positive number typed with a dot or a comma, otherwise restore the previous value.
   const saveArea = () => {
     const value = Number(areaText.replace(',', '.'));
     if (Number.isFinite(value) && value > 0) {

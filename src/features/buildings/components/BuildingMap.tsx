@@ -1,3 +1,4 @@
+/** Native map: the Leaflet page runs in a WebView; commands are sent by running JavaScript inside it. */
 import { useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';

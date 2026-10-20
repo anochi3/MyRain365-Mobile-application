@@ -1,3 +1,4 @@
+/** Step 3: private or shared site, courée, and where a tank could go. */
 import { useRouter } from 'expo-router';
 import { ArrowLineDown, Buildings, Cylinder, Prohibit, type Icon } from 'phosphor-react-native';
 import { StyleSheet, View } from 'react-native';

@@ -1,3 +1,4 @@
+/** Small colour key under a chart. */
 import { StyleSheet, View } from 'react-native';
 
 import AppText from '@/shared/components/AppText';

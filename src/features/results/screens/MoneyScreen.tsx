@@ -1,3 +1,4 @@
+/** Is it worth the money: payback, balance after 10 and 20 years, rainwater vs mains price per m³. */
 import { CheckCircle, WarningCircle } from 'phosphor-react-native';
 import { StyleSheet, View } from 'react-native';
 
@@ -13,6 +14,7 @@ import { colors, fonts } from '@/shared/global.styles';
 import ResultDetail from '../components/ResultDetail';
 import { useResultFormat } from '../useResultFormat';
 
+// The tank "pays back" if its fastest payback is within 20 years.
 const PAYBACK_HORIZON_YEARS = 20;
 
 export default function MoneyScreen() {
@@ -20,6 +22,7 @@ export default function MoneyScreen() {
   const { preferences, project } = useProjectStore();
   const { updatePreferences } = useProjectActions();
 
+  // Shows a balance range in thousands of euros, for example "−€4.0k to −€2.0k".
   const signedThousands = ([low, high]: Range) =>
     fill(s.common.range, { low: thousands(low), high: thousands(high) });
 

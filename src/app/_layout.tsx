@@ -1,3 +1,4 @@
+/** Root of the app: loads the Geist fonts and the saved project, then shows the screens. */
 import {
   Geist_400Regular,
   Geist_500Medium,

@@ -1,3 +1,4 @@
+/** Monthly bars: water needed (light blue), rain collected (teal), and a line for the water left in the tank. */
 import Svg, { Line, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 
 import type { MonthResult } from '@/data/calculations/simulation';
@@ -17,6 +18,7 @@ const BOTTOM = 24;
 const TOP = 20;
 
 export default function MonthChart({ months, monthInitials, unitLabel, height = 200 }: Props) {
+  // Highest value on the chart plus 12% headroom, so the tallest bar does not touch the top.
   const top =
     Math.max(
       ...months.map((month) =>
@@ -30,8 +32,10 @@ export default function MonthChart({ months, monthInitials, unitLabel, height = 
       {(width) => {
         const plotHeight = height - BOTTOM - TOP;
         const baseY = height - BOTTOM;
+        // Twelve equal slots, one per month.
         const step = (width - LEFT - 4) / 12;
         const barWidth = Math.min(14, step - 4);
+        // Height of a value = its share of the top value × plot height, measured up from the base line.
         const y = (value: number) => baseY - (plotHeight * value) / top;
         const levelPoints = months
           .map(

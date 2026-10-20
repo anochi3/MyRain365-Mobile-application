@@ -1,3 +1,4 @@
+/** Fetches address suggestions 220 ms after the user stops typing, cancelling older requests. */
 import { useEffect, useState } from 'react';
 
 import { suggestAddresses, type AddressSuggestion } from '@/data/services/ignService';

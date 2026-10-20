@@ -1,3 +1,7 @@
+/**
+ * Rough water-quality estimate from what we know about the roof and its surroundings.
+ * It is a guide, not a measurement: only a lab test measures the real quality.
+ */
 import type { Project } from '@/data/store/projectTypes';
 
 export type RiskLevel = 'low' | 'medium' | 'high';
@@ -13,11 +17,22 @@ export type QualityAssessment = {
   wantsDrinking: boolean;
 };
 
+/** Risk levels from best to worst; their position in this list is used to compare them. */
 const LEVELS: RiskLevel[] = ['low', 'medium', 'high'];
 
+/** Moves a risk one step up (low → medium → high), never above high. */
 const raise = (level: RiskLevel, steps = 1): RiskLevel =>
   LEVELS[Math.min(LEVELS.indexOf(level) + steps, LEVELS.length - 1)];
 
+/**
+ * Starting points and what raises them:
+ * - bacteria: always at least medium in stored rainwater (birds, leaves); higher on a poor roof
+ * - metals: medium on a metal roof; higher near industry
+ * - dust and particles: low; higher near a busy road or on a poor roof
+ * - pesticides: low; higher next to fields
+ * - organic matter and colour: medium on green or thatched roofs; higher on a poor roof
+ * The overall risk is the worst of the five.
+ */
 export function assessQuality(project: Project): QualityAssessment {
   const { roof, quality, household } = project;
   const poorRoof = quality.roofCondition === 'poor';
@@ -53,6 +68,7 @@ export function assessQuality(project: Project): QualityAssessment {
   return {
     risks,
     overall,
+    // Treatment for non-drinking uses: the same four steps for every home.
     treatment: ['gutterMesh', 'firstFlush', 'sedimentFilter', 'labelledPipes'],
     wantsDrinking: household.uses.drinking,
   };

@@ -1,3 +1,4 @@
+/** Own tank vs shared courée tank side by side, and a way to invite the neighbours. */
 import { CloudRain, Star, UsersThree } from 'phosphor-react-native';
 import { Share, StyleSheet, View } from 'react-native';
 

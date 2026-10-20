@@ -1,3 +1,4 @@
+/** Common frame of the setup steps: title, back button, five-step progress bar and the bottom button. */
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 

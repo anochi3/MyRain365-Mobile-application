@@ -1,3 +1,4 @@
+/** Two bars per day: what was needed (grey) and what the tank supplied (teal, or brick when short). */
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 
 import { colors } from '@/shared/global.styles';
@@ -30,6 +31,7 @@ export default function PairedBars({ bars, height = 160, formatValue }: Props) {
         const baseY = height - BOTTOM;
         const step = (width - LEFT) / bars.length;
         const barWidth = Math.min(36, step * 0.35);
+        // Same scaling as the monthly chart: value ÷ max × plot height, up from the base line.
         const y = (value: number) => baseY - (plotHeight * value) / max;
 
         return (

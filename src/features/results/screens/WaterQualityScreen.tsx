@@ -1,3 +1,4 @@
+/** Estimated contamination risks, the treatment chain for the chosen uses, and the drinking-water rule. */
 import {
   ArrowRight,
   Drop,

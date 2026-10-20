@@ -1,3 +1,4 @@
+/** Cost of each part and the savings line crossing the system cost over 40 years. */
 import { Cylinder, Engine, Funnel, Pipe, Wrench, type Icon } from 'phosphor-react-native';
 import { StyleSheet, View } from 'react-native';
 
@@ -33,6 +34,7 @@ export default function CostScreen() {
           { length: HORIZON_YEARS / YEAR_STEP + 1 },
           (_, index) => index * YEAR_STEP,
         );
+        // Chart height: whichever is larger, the system cost or 40 years of net savings, plus 5%.
         const top = Math.max(own.cost[1], own.netAnnualSaving * HORIZON_YEARS) * 1.05;
 
         return (
@@ -68,6 +70,7 @@ export default function CostScreen() {
               <LineChart
                 points={years.map((year) => ({
                   label: `${year}`,
+                  // Savings after N years = N × net yearly saving (shown from zero upwards).
                   value: Math.max(0, year * own.netAnnualSaving),
                 }))}
                 max={top}

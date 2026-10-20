@@ -1,3 +1,4 @@
+/** Form controls from the Figma: chip, segmented control, toggle switch and number stepper. */
 import { Check, Minus, Plus } from 'phosphor-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 

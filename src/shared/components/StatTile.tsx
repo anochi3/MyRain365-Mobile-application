@@ -1,3 +1,4 @@
+/** Small tile with a label, a big number and a hint; rows of two tiles. */
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 

@@ -1,3 +1,4 @@
+/** Weather icon for an Open-Meteo weather code (WMO standard). */
 import {
   Cloud,
   CloudFog,

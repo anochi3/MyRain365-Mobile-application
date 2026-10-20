@@ -1,3 +1,4 @@
+/** Info or warning banner, and the centred message used for empty, loading and error states. */
 import { Info, WarningCircle, type Icon } from 'phosphor-react-native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 

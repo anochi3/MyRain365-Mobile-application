@@ -1,3 +1,4 @@
+/** Line chart drawn with SVG: optional filled area, dots, a dashed limit line and a shaded band. */
 import Svg, { Circle, Line, Polygon, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 
 import { colors } from '@/shared/global.styles';
@@ -45,11 +46,14 @@ export default function LineChart({
       {(width) => {
         const plotWidth = width - LEFT - RIGHT;
         const plotHeight = height - TOP - BOTTOM;
+        // Spread the points evenly across the width.
         const x = (index: number) =>
           LEFT + (points.length > 1 ? (index / (points.length - 1)) * plotWidth : plotWidth / 2);
+        // Map a value to a height: min sits on the bottom line, max on the top line (SVG y grows downwards).
         const y = (value: number) =>
           TOP + plotHeight * (1 - (Math.min(Math.max(value, min), max) - min) / (max - min || 1));
         const line = points.map((point, index) => `${x(index)},${y(point.value)}`).join(' ');
+        // Show at most about 12 labels on the x axis.
         const labelEvery = Math.ceil(points.length / 12);
 
         return (

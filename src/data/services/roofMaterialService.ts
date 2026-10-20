@@ -1,8 +1,13 @@
+/**
+ * Optional link to our roof material model (`roof-api`). When EXPO_PUBLIC_ROOF_API_URL is set, the app
+ * asks it which material the roof is made of, judging from the aerial photo.
+ */
 import type { RoofMaterial } from '@/data/store/projectTypes';
 import type { Coordinates } from '@/shared/geo';
 
 const ROOF_API_URL = process.env.EXPO_PUBLIC_ROOF_API_URL;
 
+/** The model's classes mapped to the app's materials (its "concrete" class means a flat roof). */
 const MATERIAL_BY_CLASS: Record<string, RoofMaterial> = {
   tiles: 'tiles',
   slate: 'slate',
@@ -17,6 +22,7 @@ export type DetectedMaterial = {
 
 export const isRoofModelAvailable = Boolean(ROOF_API_URL);
 
+/** Material and confidence (0 to 1) for the building at a point, or null if unavailable. */
 export async function detectRoofMaterial(
   { latitude, longitude }: Coordinates,
   signal?: AbortSignal,

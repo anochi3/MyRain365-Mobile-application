@@ -1,3 +1,4 @@
+/** Large tappable card used as a radio button or a checkbox. */
 import { Check, CheckCircle, Square, type Icon } from 'phosphor-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 

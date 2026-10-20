@@ -1,3 +1,4 @@
+/** IGN aerial photo around a building with its outline drawn on top. */
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
@@ -13,6 +14,7 @@ type Props = {
   padding?: number;
 };
 
+// Ask for an image twice the screen size so it stays sharp on high-density phone screens.
 const PIXEL_DENSITY = 2;
 
 export default function AerialRoof({ outline, height, padding = 1.2 }: Props) {
@@ -21,6 +23,7 @@ export default function AerialRoof({ outline, height, padding = 1.2 }: Props) {
     setWidth(Math.floor(event.nativeEvent.layout.width));
 
   const bounds = width > 0 ? boundsAround(outline, padding, width / height) : null;
+  // Converts a map corner to a position on the image: its share of the way across the rectangle × size.
   const toPoint = ([longitude, latitude]: [number, number]) => {
     if (!bounds) return '0,0';
     const x = ((longitude - bounds.west) / (bounds.east - bounds.west)) * width;
