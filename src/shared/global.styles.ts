@@ -35,17 +35,17 @@ export const globalStyles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: colors.text,
+    color: colors.primaryText,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: colors.secondaryText,
     marginTop: 30,
     marginBottom: 16,
   },
   empty: {
-    color: colors.textSecondary,
+    color: colors.secondaryText,
     fontSize: 14,
   },
   header: {

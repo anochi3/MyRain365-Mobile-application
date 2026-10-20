@@ -38,7 +38,13 @@
       "expo-font",
       "expo-image",
       "expo-status-bar",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "MyRain365 uses your location once, to put the pin on your house and measure your roof."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
