@@ -106,8 +106,9 @@ export const fr: Dictionary = {
   },
   ai: {
     detectingTitle: 'Notre IA analyse votre toit',
-    detectingHint: 'Lecture de la photo aérienne IGN de ce bâtiment',
-    failed: "L'IA du toit n'est pas joignable pour le moment. Choisissez le matériau vous-même.",
+    detectingHint:
+      'Lecture de la photo aérienne IGN, directement sur votre téléphone. La première fois peut prendre une minute.',
+    failed: "L'IA n'a pas pu lire ce toit pour le moment. Choisissez le matériau vous-même.",
     verdict: 'Notre IA pense que ce toit est en {material}',
     confidence: 'sûre à {value}, d’après la photo aérienne',
     unsure: "Elle n'est pas sûre. Touchez le bon matériau ci-dessus.",

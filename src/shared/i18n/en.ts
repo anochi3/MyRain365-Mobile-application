@@ -100,8 +100,9 @@ export const en = {
   },
   ai: {
     detectingTitle: 'Our AI is reading your roof',
-    detectingHint: 'Looking at the IGN aerial photo of this building',
-    failed: 'The roof AI is not reachable right now. Pick the material yourself.',
+    detectingHint:
+      'Looking at the IGN aerial photo, right on your phone. The first time can take a minute.',
+    failed: 'The roof AI could not read this roof right now. Pick the material yourself.',
     verdict: 'Our AI thinks this roof is {material}',
     confidence: '{value} sure, judged from the aerial photo',
     unsure: 'It is not sure. Please tap the right material above.',

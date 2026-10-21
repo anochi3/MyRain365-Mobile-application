@@ -15,15 +15,24 @@ import onnxruntime as ort
 from PIL import Image, ImageDraw, ImageFilter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-M = os.path.join(HERE, "models")
+M = os.path.join(HERE, "..", "assets", "roof-model")
 META = json.load(open(os.path.join(M, "meta.json")))
 CLASSES = META["classes"]
 MEAN = np.array(META["mean"], np.float32)
 STD = np.array(META["std"], np.float32)
 NETS = {name: ort.InferenceSession(os.path.join(M, f"{name}.onnx"), providers=["CPUExecutionProvider"])
         for name in META["sizes"]}
-_t = np.load(os.path.join(M, "colour_trees.npz"))
-TREES = {k: _t[k] for k in _t.files}          # load once: npz access is slow
+
+
+def _load_trees(path):
+    raw = open(path, "rb").read()
+    start, length = np.frombuffer(raw[:8], "<u4")
+    header = json.loads(raw[8:8 + length])
+    types = {"f8": "<f8", "i4": "<i4", "u1": "u1"}
+    return {k: np.frombuffer(raw, types[t], n, start + off) for k, (t, off, n) in header.items()}
+
+
+TREES = _load_trees(os.path.join(M, "colour_trees.bin"))
 
 Z, TILE, SIZE = 19, 256, 96
 CACHE = os.path.join(HERE, "tile_cache")

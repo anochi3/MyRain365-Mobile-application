@@ -1,0 +1,771 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.wasm.min.js"></script>
+  </head>
+  <body>
+    <script id="core">
+      'use strict';
+      window.RoofModelCore = (() => {
+        const Z = 19;
+        const TILE = 256;
+        const CONTEXT = 1.6;
+        const MIN_SIDE_PX = 64;
+        const DIM = Math.fround(0.35);
+        const CROP = 160;
+        const EARTH_RADIUS_M = 6371008.8;
+        const DEG = Math.PI / 180;
+        const PRECISION_BITS = 22;
+        const f32 = Math.fround;
+
+        function ringOf(feature) {
+          return feature.geometry.coordinates[0][0];
+        }
+
+        function isInside(x, y, ring) {
+          let inside = false;
+          for (let i = 0; i < ring.length - 1; i++) {
+            const [x1, y1] = ring[i];
+            const [x2, y2] = ring[i + 1];
+            if (y1 > y !== y2 > y && x < ((x2 - x1) * (y - y1)) / (y2 - y1) + x1) inside = !inside;
+          }
+          return inside;
+        }
+
+        function distanceTo(x, y, ring) {
+          let best = 1e9;
+          for (let i = 0; i < ring.length - 1; i++) {
+            const [x1, y1] = ring[i];
+            const [x2, y2] = ring[i + 1];
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy || 1)));
+            best = Math.min(best, Math.hypot(x - x1 - t * dx, y - y1 - t * dy));
+          }
+          return best;
+        }
+
+        function pickBuilding(features, lat, lon) {
+          const usable = features.filter((f) => f.properties.usage_1 !== 'Annexe');
+          const candidates = usable.length ? usable : features;
+          let best = null;
+          let bestScore = Infinity;
+          for (const feature of candidates) {
+            const ring = ringOf(feature);
+            const score = isInside(lon, lat, ring) ? 0 : distanceTo(lon, lat, ring);
+            if (score < bestScore) {
+              best = feature;
+              bestScore = score;
+            }
+          }
+          return best;
+        }
+
+        function roofArea(ring) {
+          const lat0 = ring.reduce((sum, c) => sum + c[1], 0) / ring.length;
+          const xy = ring.map((c) => [
+            EARTH_RADIUS_M * (c[0] * DEG) * Math.cos(lat0 * DEG),
+            EARTH_RADIUS_M * (c[1] * DEG),
+          ]);
+          let sum = 0;
+          for (let i = 0; i < xy.length - 1; i++) sum += xy[i][0] * xy[i + 1][1] - xy[i + 1][0] * xy[i][1];
+          return 0.5 * Math.abs(sum);
+        }
+
+        function isFlat(properties) {
+          const low = properties.altitude_minimale_toit;
+          const high = properties.altitude_maximale_toit;
+          return low == null || high == null ? null : high - low < 0.5;
+        }
+
+        function worldPixel(lon, lat) {
+          const n = 2 ** Z * TILE;
+          const s = Math.sin(lat * DEG);
+          return [((lon + 180) / 360) * n, (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * n];
+        }
+
+        function cropPlan(ring) {
+          const points = ring.map((c) => worldPixel(c[0], c[1]));
+          const xs = points.map((p) => p[0]);
+          const ys = points.map((p) => p[1]);
+          const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+          const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+          const side =
+            Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), MIN_SIDE_PX / CONTEXT) *
+            CONTEXT;
+          const x0 = cx - side / 2;
+          const y0 = cy - side / 2;
+          const x1 = cx + side / 2;
+          const y1 = cy + side / 2;
+          const tiles = {
+            x0: Math.floor(x0 / TILE),
+            y0: Math.floor(y0 / TILE),
+            x1: Math.floor(x1 / TILE),
+            y1: Math.floor(y1 / TILE),
+          };
+          const ox = tiles.x0 * TILE;
+          const oy = tiles.y0 * TILE;
+          const box = [Math.trunc(x0 - ox), Math.trunc(y0 - oy), Math.ceil(x1 - ox), Math.ceil(y1 - oy)];
+          const polygon = points.map(([a, b]) => [a - ox - box[0], b - oy - box[1]]);
+          return { tiles, box, polygon };
+        }
+
+        function addEdge(x0, y0, x1, y1) {
+          const edge = {
+            xmin: Math.min(x0, x1),
+            xmax: Math.max(x0, x1),
+            ymin: Math.min(y0, y1),
+            ymax: Math.max(y0, y1),
+            dx: y0 === y1 ? 0 : f32(f32(x1 - x0) / (y1 - y0)),
+            x0,
+            y0,
+          };
+          return edge;
+        }
+
+        const roundUp = (v) => (v >= 0 ? Math.floor(f32(v + 0.5)) : -Math.floor(f32(Math.abs(v) + 0.5)));
+        const roundDown = (v) => (v >= 0 ? Math.ceil(f32(v - 0.5)) : -Math.ceil(f32(Math.abs(v) - 0.5)));
+        const roundF = (v) => (v >= 0 ? Math.floor(v + 0.5) : -Math.floor(-v + 0.5));
+        const lineX = (edge, y) => f32(f32((y - edge.y0) * edge.dx) + edge.x0);
+
+        function fillPolygon(width, height, polygon) {
+          const mask = new Uint8Array(width * height);
+          const hline = (xa, y, xb) => {
+            if (y < 0 || y >= height) return;
+            if (xa < 0) xa = 0;
+            else if (xa >= width) return;
+            if (xb < 0) return;
+            if (xb >= width) xb = width - 1;
+            if (xa <= xb) mask.fill(255, y * width + xa, y * width + xb + 1);
+          };
+          const xy = polygon.map(([a, b]) => [Math.trunc(a), Math.trunc(b)]);
+          const edges = [];
+          let i = 0;
+          for (; i < xy.length - 1; i++) {
+            const [x0, y0] = xy[i];
+            const [x1, y1] = xy[i + 1];
+            if (y0 === y1 && i !== 0 && y0 === xy[i - 1][1]) {
+              const last = edges[edges.length - 1];
+              if (x1 > x0 && x0 > xy[i - 1][0]) {
+                last.xmax = x1;
+                continue;
+              } else if (x1 < x0 && x0 < xy[i - 1][0]) {
+                last.xmin = x1;
+                continue;
+              }
+            }
+            edges.push(addEdge(x0, y0, x1, y1));
+          }
+          if (xy[i][0] !== xy[0][0] || xy[i][1] !== xy[0][1]) edges.push(addEdge(xy[i][0], xy[i][1], xy[0][0], xy[0][1]));
+          if (!edges.length) return mask;
+
+          let ymin = height - 1;
+          let ymax = 0;
+          const table = [];
+          for (const edge of edges) {
+            if (ymin > edge.ymin) ymin = edge.ymin;
+            if (ymax < edge.ymax) ymax = edge.ymax;
+            if (edge.ymin === edge.ymax) {
+              hline(edge.xmin, edge.ymin, edge.xmax);
+              continue;
+            }
+            table.push(edge);
+          }
+          if (ymin < 0) ymin = 0;
+          if (ymax > height) ymax = height;
+
+          for (; ymin <= ymax; ymin++) {
+            const xx = [];
+            for (let e = 0; e < table.length; e++) {
+              const current = table[e];
+              if (ymin < current.ymin || ymin > current.ymax) continue;
+              xx.push(lineX(current, ymin));
+              const j = xx.length;
+              if (ymin === current.ymax && ymin < ymax) {
+                xx.push(xx[j - 1]);
+              } else if ((ymin === current.ymin || ymin === current.ymax) && current.dx !== 0) {
+                for (let k = 0; k < e; k++) {
+                  const other = table[k];
+                  if ((ymin !== other.ymin && ymin !== other.ymax) || other.dx === 0) continue;
+                  if (roundF(xx[j - 1]) !== roundF(lineX(other, ymin))) continue;
+                  const offset = ymin === current.ymax ? -1 : 1;
+                  const adjacent = lineX(current, ymin + offset);
+                  if (ymin + offset >= other.ymin && ymin + offset <= other.ymax) {
+                    const adjacentOther = lineX(other, ymin + offset);
+                    if (xx[j - 1] > f32(adjacent + 1) && xx[j - 1] > f32(adjacentOther + 1)) {
+                      xx[j - 1] = f32(roundF(Math.max(adjacent, adjacentOther)) + 1);
+                    } else if (xx[j - 1] < f32(adjacent - 1) && xx[j - 1] < f32(adjacentOther - 1)) {
+                      xx[j - 1] = f32(roundF(Math.min(adjacent, adjacentOther)) - 1);
+                    }
+                    break;
+                  }
+                }
+              }
+            }
+            xx.sort((a, b) => a - b);
+            for (let s = 1; s < xx.length; s += 2) hline(roundUp(xx[s - 1]), ymin, roundDown(xx[s]));
+          }
+          return mask;
+        }
+
+        function bilinearCoefficients(inSize, outSize) {
+          const scale = inSize / outSize;
+          const filterScale = Math.max(scale, 1);
+          const support = filterScale;
+          const size = Math.ceil(support) * 2 + 1;
+          const bounds = new Int32Array(outSize * 2);
+          const weights = new Float64Array(outSize * size);
+          for (let xx = 0; xx < outSize; xx++) {
+            const center = (xx + 0.5) * scale;
+            let xmin = Math.trunc(center - support + 0.5);
+            if (xmin < 0) xmin = 0;
+            let xmax = Math.trunc(center + support + 0.5);
+            if (xmax > inSize) xmax = inSize;
+            xmax -= xmin;
+            let total = 0;
+            for (let x = 0; x < xmax; x++) {
+              const d = Math.abs((x + xmin - center + 0.5) / filterScale);
+              const w = d < 1 ? 1 - d : 0;
+              weights[xx * size + x] = w;
+              total += w;
+            }
+            for (let x = 0; x < xmax; x++) {
+              const w = total !== 0 ? weights[xx * size + x] / total : weights[xx * size + x];
+              weights[xx * size + x] = Math.trunc(w < 0 ? -0.5 + w * (1 << PRECISION_BITS) : 0.5 + w * (1 << PRECISION_BITS));
+            }
+            bounds[xx * 2] = xmin;
+            bounds[xx * 2 + 1] = xmax;
+          }
+          return { size, bounds, weights };
+        }
+
+        const clip8 = (v) => {
+          const shifted = Math.floor(v / (1 << PRECISION_BITS));
+          return shifted < 0 ? 0 : shifted > 255 ? 255 : shifted;
+        };
+
+        function resizeBilinear(image, outW, outH) {
+          const { width, height, channels, data } = image;
+          if (width === outW && height === outH) return { width, height, channels, data: data.slice() };
+          let current = image;
+          if (width !== outW) {
+            const { size, bounds, weights } = bilinearCoefficients(width, outW);
+            const out = new Uint8Array(outW * height * channels);
+            for (let y = 0; y < height; y++) {
+              for (let xx = 0; xx < outW; xx++) {
+                const xmin = bounds[xx * 2];
+                const count = bounds[xx * 2 + 1];
+                for (let c = 0; c < channels; c++) {
+                  let sum = 1 << (PRECISION_BITS - 1);
+                  for (let x = 0; x < count; x++) sum += data[(y * width + xmin + x) * channels + c] * weights[xx * size + x];
+                  out[(y * outW + xx) * channels + c] = clip8(sum);
+                }
+              }
+            }
+            current = { width: outW, height, channels, data: out };
+          }
+          if (height !== outH) {
+            const src = current.data;
+            const w = current.width;
+            const { size, bounds, weights } = bilinearCoefficients(height, outH);
+            const out = new Uint8Array(w * outH * channels);
+            for (let yy = 0; yy < outH; yy++) {
+              const ymin = bounds[yy * 2];
+              const count = bounds[yy * 2 + 1];
+              for (let x = 0; x < w; x++) {
+                for (let c = 0; c < channels; c++) {
+                  let sum = 1 << (PRECISION_BITS - 1);
+                  for (let y = 0; y < count; y++) sum += src[((ymin + y) * w + x) * channels + c] * weights[yy * size + y];
+                  out[(yy * w + x) * channels + c] = clip8(sum);
+                }
+              }
+            }
+            current = { width: w, height: outH, channels, data: out };
+          }
+          return current;
+        }
+
+        function cropRoof(mosaic, plan) {
+          const [bx0, by0, bx1, by1] = plan.box;
+          const width = bx1 - bx0;
+          const height = by1 - by0;
+          const mask = fillPolygon(width, height, plan.polygon);
+          const dimmed = new Uint8Array(width * height * 3);
+          for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+              const src = ((by0 + y) * mosaic.width + bx0 + x) * 3;
+              const dst = (y * width + x) * 3;
+              const inside = mask[y * width + x] === 255;
+              for (let c = 0; c < 3; c++) {
+                const v = mosaic.data[src + c];
+                dimmed[dst + c] = inside ? v : Math.trunc(f32(v * DIM));
+              }
+            }
+          }
+          return {
+            crop: resizeBilinear({ width, height, channels: 3, data: dimmed }, CROP, CROP),
+            mask: resizeBilinear({ width, height, channels: 1, data: mask }, CROP, CROP),
+          };
+        }
+
+        function mean(values) {
+          let sum = 0;
+          for (const v of values) sum += v;
+          return sum / values.length;
+        }
+
+        function std(values) {
+          const m = mean(values);
+          let sum = 0;
+          for (const v of values) sum += (v - m) * (v - m);
+          return Math.sqrt(sum / values.length);
+        }
+
+        function percentiles(values, qs) {
+          const sorted = Float64Array.from(values).sort();
+          return qs.map((q) => {
+            const index = (q / 100) * (sorted.length - 1);
+            const low = Math.floor(index);
+            const high = Math.min(low + 1, sorted.length - 1);
+            const t = index - low;
+            return sorted[low] + (sorted[high] - sorted[low]) * t;
+          });
+        }
+
+        function histogram(values, bins, low, high, weights) {
+          const counts = new Float64Array(bins);
+          const edges = Array.from({ length: bins + 1 }, (_, i) => f32(low + ((high - low) * i) / bins));
+          values.forEach((v, n) => {
+            if (!(v >= low && v <= high)) return;
+            let i = Math.trunc(((v - low) * bins) / (high - low));
+            if (i === bins) i -= 1;
+            if (v < edges[i]) i -= 1;
+            else if (i !== bins - 1 && v >= edges[i + 1]) i += 1;
+            counts[i] += weights ? weights[n] : 1;
+          });
+          return Array.from(counts);
+        }
+
+        function floatMod(a, b) {
+          let mod = a % b;
+          if (mod !== 0 && b < 0 !== mod < 0) mod += b;
+          return f32(mod === 0 ? 0 : mod);
+        }
+
+        function toHsv(r, g, b) {
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          const d = f32(f32(max - min) + f32(1e-6));
+          let h;
+          if (max === r) {
+            h = floatMod(f32(f32(g - b) / d), 6);
+          } else if (max === g) {
+            h = f32(f32(f32(b - r) / d) + 2);
+          } else {
+            h = f32(f32(f32(r - g) / d) + 4);
+          }
+          h = f32(h / 6);
+          const s = max > 0 ? f32(d / f32(max + f32(1e-6))) : 0;
+          return [h, s, max];
+        }
+
+        function colourFeatures(crop, mask, area, flat) {
+          const n = crop.width * crop.height;
+          const a = new Float32Array(n * 3);
+          for (let i = 0; i < n * 3; i++) a[i] = crop.data[i] / 255;
+          const m = new Uint8Array(n);
+          for (let i = 0; i < n; i++) m[i] = f32(mask.data[i] / 255) > 0.5 ? 1 : 0;
+
+          const rgb = [[], [], []];
+          const hsv = [[], [], []];
+          for (let i = 0; i < n; i++) {
+            if (!m[i]) continue;
+            const r = a[i * 3];
+            const g = a[i * 3 + 1];
+            const b = a[i * 3 + 2];
+            rgb[0].push(r);
+            rgb[1].push(g);
+            rgb[2].push(b);
+            const [h, s, v] = toHsv(r, g, b);
+            hsv[0].push(h);
+            hsv[1].push(s);
+            hsv[2].push(v);
+          }
+
+          const features = [];
+          for (const channels of [rgb, hsv]) {
+            features.push(...channels.map(mean), ...channels.map(std));
+            const qs = channels.map((values) => percentiles(values, [10, 50, 90]));
+            for (let q = 0; q < 3; q++) for (let c = 0; c < 3; c++) features.push(qs[c][q]);
+          }
+          const hue = histogram(hsv[0], 12, 0, 1, hsv[1]);
+          const hueTotal = hue.reduce((x, y) => x + y, 0);
+          features.push(...hue.map((v) => v / (hueTotal + 1e-6)));
+          features.push(...histogram(hsv[2], 8, 0, 1).map((v) => v / rgb[0].length));
+
+          const w = crop.width;
+          const h = crop.height;
+          const grey = new Float32Array(n);
+          for (let i = 0; i < n; i++) grey[i] = f32(f32(f32(a[i * 3] + a[i * 3 + 1]) + a[i * 3 + 2]) / 3);
+          const gx = new Float32Array(n);
+          const gy = new Float32Array(n);
+          for (let y = 0; y < h; y++) {
+            for (let x = 1; x < w - 1; x++) gx[y * w + x] = grey[y * w + x + 1] - grey[y * w + x - 1];
+          }
+          for (let y = 1; y < h - 1; y++) {
+            for (let x = 0; x < w; x++) gy[y * w + x] = grey[(y + 1) * w + x] - grey[(y - 1) * w + x];
+          }
+          const magnitude = new Float32Array(n);
+          for (let i = 0; i < n; i++) magnitude[i] = Math.hypot(gx[i], gy[i]);
+          const inner = m.slice();
+          for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+              const i = y * w + x;
+              inner[i] = m[i] & m[i - w] & m[i + w] & m[i - 1] & m[i + 1];
+            }
+          }
+          const innerCount = inner.reduce((x, y) => x + y, 0);
+          const ok = innerCount > 10;
+          const pick = ok ? inner : m;
+          const mv = [];
+          const angles = [];
+          const angleWeights = [];
+          const pi = f32(Math.PI);
+          for (let i = 0; i < n; i++) {
+            if (!pick[i]) continue;
+            mv.push(magnitude[i]);
+            if (ok) {
+              const t = f32(Math.atan2(gy[i], gx[i]));
+              angles.push(floatMod(t, pi));
+              angleWeights.push(magnitude[i]);
+            }
+          }
+          features.push(mean(mv), std(mv), percentiles(mv, [90])[0]);
+          const angleHist = ok ? histogram(angles, 8, 0, Math.PI, angleWeights) : histogram([0], 8, 0, Math.PI);
+          const angleTotal = angleHist.reduce((x, y) => x + y, 0);
+          features.push(...angleHist.map((v) => v / (angleTotal + 1e-6)));
+          features.push(Math.log1p(area), flat === null ? -1 : flat ? 1 : 0);
+          return features;
+        }
+
+        function parseTrees(buffer) {
+          const view = new DataView(buffer);
+          const start = view.getUint32(0, true);
+          const length = view.getUint32(4, true);
+          const header = JSON.parse(new TextDecoder().decode(new Uint8Array(buffer, 8, length)));
+          const types = { f8: Float64Array, i4: Int32Array, u1: Uint8Array };
+          const trees = {};
+          for (const [name, [type, offset, count]] of Object.entries(header)) {
+            trees[name] = new types[type](buffer, start + offset, count);
+          }
+          return trees;
+        }
+
+        function treeProbabilities(trees, x) {
+          const raw = Array.from(trees.baseline);
+          for (let t = 0; t < trees.start.length; t++) {
+            let i = trees.start[t];
+            while (!trees.leaf[i]) i = x[trees.feature[i]] <= trees.threshold[i] ? trees.left[i] : trees.right[i];
+            raw[trees.cls[t]] += trees.value[i];
+          }
+          return softmax(raw);
+        }
+
+        function softmax(logits) {
+          const top = Math.max(...logits);
+          const e = logits.map((v) => Math.exp(v - top));
+          const total = e.reduce((x, y) => x + y, 0);
+          return e.map((v) => v / total);
+        }
+
+        function networkInput(crop, mean, std) {
+          const size = crop.width;
+          const plane = size * size;
+          const base = new Float32Array(3 * plane);
+          for (let i = 0; i < plane; i++) {
+            for (let c = 0; c < 3; c++) {
+              base[c * plane + i] = f32(f32(f32(crop.data[i * 3 + c] / 255) - f32(mean[c])) / f32(std[c]));
+            }
+          }
+          const views = new Float32Array(8 * 3 * plane);
+          let v = 0;
+          for (const flip of [false, true]) {
+            for (let k = 0; k < 4; k++) {
+              for (let c = 0; c < 3; c++) {
+                for (let i = 0; i < size; i++) {
+                  for (let j = 0; j < size; j++) {
+                    let si;
+                    let sj;
+                    if (k === 0) [si, sj] = [i, j];
+                    else if (k === 1) [si, sj] = [j, size - 1 - i];
+                    else if (k === 2) [si, sj] = [size - 1 - i, size - 1 - j];
+                    else [si, sj] = [size - 1 - j, i];
+                    if (flip) sj = size - 1 - sj;
+                    views[v * 3 * plane + c * plane + i * size + j] = base[c * plane + si * size + sj];
+                  }
+                }
+              }
+              v++;
+            }
+          }
+          return views;
+        }
+
+        function averageSoftmax(logits, views, classes) {
+          const sum = new Array(classes).fill(0);
+          for (let v = 0; v < views; v++) {
+            const p = softmax(Array.from(logits.slice(v * classes, (v + 1) * classes)));
+            p.forEach((x, c) => (sum[c] += x));
+          }
+          return sum.map((x) => x / views);
+        }
+
+        return {
+          TILE,
+          ringOf,
+          pickBuilding,
+          roofArea,
+          isFlat,
+          cropPlan,
+          fillPolygon,
+          resizeBilinear,
+          cropRoof,
+          colourFeatures,
+          parseTrees,
+          treeProbabilities,
+          networkInput,
+          averageSoftmax,
+        };
+      })();
+    </script>
+    <script>
+      'use strict';
+      (() => {
+        const CHANNEL = 'myrain365-roof-model';
+        const ORT_DIST = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/';
+        const WFS =
+          'https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=BDTOPO_V3:batiment' +
+          '&OUTPUTFORMAT=application/json&COUNT=30&BBOX=';
+        const WMTS =
+          'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS' +
+          '&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=19&FORMAT=image/jpeg';
+        const SEARCH_RADIUS_DEG = 0.00025;
+        const CACHE_DB = 'myrain365-roof-model';
+        const core = window.RoofModelCore;
+
+        const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+        async function fetchWithRetry(url, attempts = 3) {
+          for (let attempt = 1; ; attempt++) {
+            try {
+              const response = await fetch(url);
+              if (response.status < 500 || attempt >= attempts) return response;
+            } catch (error) {
+              if (attempt >= attempts) throw error;
+            }
+            await sleep(700 * attempt);
+          }
+        }
+
+        const emit = (message) => {
+          const text = JSON.stringify({ channel: CHANNEL, ...message });
+          if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(text);
+          else window.parent.postMessage(text, '*');
+        };
+
+        const cacheKey = (url) => {
+          const match = /[?&]hash=([^&]+)/.exec(url);
+          return match ? match[1] : url;
+        };
+
+        function openCache() {
+          return new Promise((resolve) => {
+            try {
+              const request = indexedDB.open(CACHE_DB, 1);
+              request.onupgradeneeded = () => request.result.createObjectStore('files');
+              request.onsuccess = () => resolve(request.result);
+              request.onerror = () => resolve(null);
+            } catch {
+              resolve(null);
+            }
+          });
+        }
+
+        function cacheRequest(db, mode, action) {
+          return new Promise((resolve) => {
+            try {
+              const request = action(db.transaction('files', mode).objectStore('files'));
+              request.onsuccess = () => resolve(request.result);
+              request.onerror = () => resolve(undefined);
+            } catch {
+              resolve(undefined);
+            }
+          });
+        }
+
+        async function loadFile(url) {
+          const db = await openCache();
+          const key = cacheKey(url);
+          const cached = db ? await cacheRequest(db, 'readonly', (store) => store.get(key)) : undefined;
+          if (cached instanceof ArrayBuffer) return cached;
+          const response = await fetchWithRetry(url);
+          if (!response.ok) throw new Error(`model file ${response.status}`);
+          const buffer = await response.arrayBuffer();
+          if (db) await cacheRequest(db, 'readwrite', (store) => store.put(buffer, key));
+          return buffer;
+        }
+
+        let modelsPromise = null;
+
+        function loadModels(files, meta) {
+          if (!modelsPromise) {
+            modelsPromise = (async () => {
+              ort.env.wasm.wasmPaths = ORT_DIST;
+              ort.env.wasm.numThreads = 1;
+              const names = Object.keys(meta.sizes);
+              const [trees, ...sessions] = await Promise.all([
+                loadFile(files.trees).then(core.parseTrees),
+                ...names.map(async (name) =>
+                  ort.InferenceSession.create(await loadFile(files[name]), {
+                    executionProviders: ['wasm'],
+                    graphOptimizationLevel: 'all',
+                  }),
+                ),
+              ]);
+              return { trees, networks: Object.fromEntries(names.map((name, i) => [name, sessions[i]])) };
+            })();
+            modelsPromise.catch(() => (modelsPromise = null));
+          }
+          return modelsPromise;
+        }
+
+        async function findBuilding(lat, lon) {
+          const e = SEARCH_RADIUS_DEG;
+          const bbox = `${lat - e},${lon - e},${lat + e},${lon + e},urn:ogc:def:crs:EPSG::4326`;
+          const response = await fetchWithRetry(WFS + bbox);
+          if (!response.ok) throw new Error(`building lookup ${response.status}`);
+          const { features } = await response.json();
+          return features.length ? core.pickBuilding(features, lat, lon) : null;
+        }
+
+        const tileCache = new Map();
+
+        async function loadTile(x, y) {
+          const key = `${x}_${y}`;
+          if (!tileCache.has(key)) {
+            tileCache.set(
+              key,
+              (async () => {
+                const response = await fetchWithRetry(`${WMTS}&TILEROW=${y}&TILECOL=${x}`);
+                const bytes = new Uint8Array(await response.arrayBuffer());
+                if (bytes[0] !== 0xff || bytes[1] !== 0xd8) throw new Error('aerial tile not available');
+                const blob = new Blob([bytes], { type: 'image/jpeg' });
+                if (window.createImageBitmap) {
+                  try {
+                    return await createImageBitmap(blob, { colorSpaceConversion: 'none', premultiplyAlpha: 'none' });
+                  } catch {}
+                }
+                const image = new Image();
+                image.src = URL.createObjectURL(blob);
+                await image.decode();
+                return image;
+              })(),
+            );
+            tileCache.get(key).catch(() => tileCache.delete(key));
+          }
+          return tileCache.get(key);
+        }
+
+        async function aerialMosaic(tiles) {
+          const columns = tiles.x1 - tiles.x0 + 1;
+          const rows = tiles.y1 - tiles.y0 + 1;
+          const canvas = document.createElement('canvas');
+          canvas.width = columns * core.TILE;
+          canvas.height = rows * core.TILE;
+          const context = canvas.getContext('2d', { willReadFrequently: true });
+          const jobs = [];
+          for (let tx = tiles.x0; tx <= tiles.x1; tx++) {
+            for (let ty = tiles.y0; ty <= tiles.y1; ty++) {
+              jobs.push(
+                loadTile(tx, ty).then((image) =>
+                  context.drawImage(image, (tx - tiles.x0) * core.TILE, (ty - tiles.y0) * core.TILE),
+                ),
+              );
+            }
+          }
+          await Promise.all(jobs);
+          const rgba = context.getImageData(0, 0, canvas.width, canvas.height).data;
+          const data = new Uint8Array(canvas.width * canvas.height * 3);
+          for (let i = 0, j = 0; i < rgba.length; i += 4, j += 3) {
+            data[j] = rgba[i];
+            data[j + 1] = rgba[i + 1];
+            data[j + 2] = rgba[i + 2];
+          }
+          return { width: canvas.width, height: canvas.height, data };
+        }
+
+        async function networkProbabilities(session, crop, meta) {
+          const input = core.networkInput(crop, meta.mean, meta.std);
+          const tensor = new ort.Tensor('float32', input, [8, 3, crop.width, crop.height]);
+          const output = await session.run({ [session.inputNames[0]]: tensor });
+          return core.averageSoftmax(output[session.outputNames[0]].data, 8, meta.classes.length);
+        }
+
+        async function detect({ lat, lon, files, meta }) {
+          const [models, building] = await Promise.all([loadModels(files, meta), findBuilding(lat, lon)]);
+          if (!building) return { ok: false, error: 'no building found at this point' };
+          const ring = core.ringOf(building);
+          const area = core.roofArea(ring);
+          const flat = core.isFlat(building.properties);
+          const plan = core.cropPlan(ring);
+          const { crop, mask } = core.cropRoof(await aerialMosaic(plan.tiles), plan);
+          const colour = core.treeProbabilities(models.trees, core.colourFeatures(crop, mask, area, flat));
+          let p = colour.map((v) => meta.weights.colour * v);
+          for (const name of Object.keys(meta.sizes)) {
+            const q = await networkProbabilities(models.networks[name], crop, meta);
+            p = p.map((v, i) => v + meta.weights[name] * q[i]);
+          }
+          const best = p.indexOf(Math.max(...p));
+          const sure = p[best] >= meta.ask_below_confidence && area <= meta.ask_above_roof_m2;
+          return {
+            ok: true,
+            building_id: building.properties.cleabs,
+            roof_area_m2: Math.round(area * 10) / 10,
+            flat_roof: flat,
+            material: meta.classes[best],
+            confidence: p[best],
+            ask_user: !sure,
+            probabilities: Object.fromEntries(meta.classes.map((c, i) => [c, p[i]])),
+            model_version: meta.model_version ?? null,
+          };
+        }
+
+        async function receive(command) {
+          if (command.type === 'preload') {
+            loadModels(command.files, command.meta).catch(() => {});
+            return;
+          }
+          if (command.type !== 'detect') return;
+          try {
+            emit({ type: 'result', id: command.id, result: await detect(command) });
+          } catch (error) {
+            console.warn('roof model', error);
+            emit({ type: 'result', id: command.id, result: { ok: false, error: String(error && error.message) } });
+          }
+        }
+
+        window.receiveRoofModelCommand = receive;
+        window.addEventListener('message', (event) => {
+          if (typeof event.data !== 'string') return;
+          try {
+            const message = JSON.parse(event.data);
+            if (message.channel === CHANNEL && message.command) receive(message.command);
+          } catch {}
+        });
+        emit({ type: 'ready' });
+      })();
+    </script>
+  </body>
+</html>

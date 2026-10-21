@@ -1,8 +1,14 @@
+import { Asset } from 'expo-asset';
+
+import treesModel from '@/assets/roof-model/colour_trees.bin';
+import convnextModel from '@/assets/roof-model/convnext.onnx';
+import efficientnetModel from '@/assets/roof-model/efficientnet.onnx';
+import engineDocument from '@/assets/roof-model/engine.html';
+import roofModelMeta from '@/assets/roof-model/meta.json';
 import type { RoofMaterial } from '@/data/store/projectTypes';
 import type { Coordinates } from '@/shared/geo';
 
-const ROOF_API_URL = process.env.EXPO_PUBLIC_ROOF_API_URL?.replace(/\/+$/, '');
-const REQUEST_TIMEOUT_MS = 20000;
+export const ROOF_MODEL_CHANNEL = 'myrain365-roof-model';
 
 const MATERIAL_BY_CLASS: Record<string, RoofMaterial> = {
   tiles: 'tiles',
@@ -19,50 +25,73 @@ export type DetectedMaterial = {
   modelVersion: string | null;
 };
 
-type RoofApiResponse = {
+export type RoofModelCommand = {
+  type: 'detect';
+  id: number;
+  lat: number;
+  lon: number;
+  files: { convnext: string; efficientnet: string; trees: string };
+  meta: typeof roofModelMeta;
+};
+
+type EngineResult = {
   ok: boolean;
   material?: string;
   confidence?: number;
   ask_user?: boolean;
   probabilities?: Record<string, number>;
-  model_version?: string;
+  model_version?: string | null;
 };
 
-export const isRoofModelAvailable = Boolean(ROOF_API_URL);
+export type RoofModelMessage =
+  | { type: 'ready' }
+  | { type: 'result'; id: number; result: EngineResult };
 
-export async function detectRoofMaterial(
+const uriOf = (module: number) => Asset.fromModule(module).uri;
+
+export const roofModelEngineUri = () => uriOf(engineDocument);
+
+export function detectionCommand(
+  id: number,
   { latitude, longitude }: Coordinates,
-  signal?: AbortSignal,
-): Promise<DetectedMaterial | null> {
-  if (!ROOF_API_URL) return null;
+): RoofModelCommand {
+  return {
+    type: 'detect',
+    id,
+    lat: latitude,
+    lon: longitude,
+    files: {
+      convnext: uriOf(convnextModel),
+      efficientnet: uriOf(efficientnetModel),
+      trees: uriOf(treesModel),
+    },
+    meta: roofModelMeta,
+  };
+}
 
-  const timeout = new AbortController();
-  const timer = setTimeout(() => timeout.abort(), REQUEST_TIMEOUT_MS);
-  signal?.addEventListener('abort', () => timeout.abort());
-
+export function parseRoofModelMessage(raw: string): RoofModelMessage | null {
   try {
-    const response = await fetch(`${ROOF_API_URL}/roof?lat=${latitude}&lon=${longitude}`, {
-      signal: timeout.signal,
-    });
-    if (!response.ok) return null;
-
-    const result = (await response.json()) as RoofApiResponse;
-    const material = result.material ? MATERIAL_BY_CLASS[result.material] : undefined;
-    if (!result.ok || !material) return null;
-
-    const probabilities = Object.entries(result.probabilities ?? {})
-      .filter(([name]) => name in MATERIAL_BY_CLASS)
-      .map(([name, probability]) => ({ material: MATERIAL_BY_CLASS[name], probability }))
-      .sort((a, b) => b.probability - a.probability);
-
-    return {
-      material,
-      confidence: result.confidence ?? 0,
-      shouldAskUser: result.ask_user ?? true,
-      probabilities,
-      modelVersion: result.model_version ?? null,
-    };
-  } finally {
-    clearTimeout(timer);
+    const message = JSON.parse(raw) as { channel?: string } & RoofModelMessage;
+    return message.channel === ROOF_MODEL_CHANNEL ? message : null;
+  } catch {
+    return null;
   }
+}
+
+export function toDetectedMaterial(result: EngineResult): DetectedMaterial | null {
+  const material = result.material ? MATERIAL_BY_CLASS[result.material] : undefined;
+  if (!result.ok || !material) return null;
+
+  const probabilities = Object.entries(result.probabilities ?? {})
+    .filter(([name]) => name in MATERIAL_BY_CLASS)
+    .map(([name, probability]) => ({ material: MATERIAL_BY_CLASS[name], probability }))
+    .sort((a, b) => b.probability - a.probability);
+
+  return {
+    material,
+    confidence: result.confidence ?? 0,
+    shouldAskUser: result.ask_user ?? true,
+    probabilities,
+    modelVersion: result.model_version ?? null,
+  };
 }

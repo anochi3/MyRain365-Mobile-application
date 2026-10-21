@@ -15,6 +15,7 @@ import { colors, fonts } from '@/shared/global.styles';
 import { useI18n } from '@/shared/i18n';
 
 import MaterialDetectionCard from '../components/MaterialDetectionCard';
+import RoofModelEngine from '../components/RoofModelEngine';
 import SetupScaffold from '../components/SetupScaffold';
 import { useRoofMaterialDetection } from '../hooks/useRoofMaterialDetection';
 
@@ -139,6 +140,7 @@ export default function RoofScreen() {
       </Card>
 
       <MaterialDetectionCard state={detection.state} onUse={detection.applySuggestion} />
+      {detection.engine.coordinates ? <RoofModelEngine {...detection.engine} /> : null}
 
       {roof.material === 'thatched' ? (
         <Notice tone="warning" text={s.roof.thatchedWarning} />

@@ -16,23 +16,19 @@ loads a real Roubaix courée house so every screen can be explored without typin
 
 ## Roof AI (test branch `aitestv1`)
 
-The roof step asks our roof material model what the roof is made of. The model runs in a small Python server in
-[`roof-api/`](roof-api/) because it needs the IGN aerial photo, the building outline and about 50 MB of model files.
+The roof step asks our roof material model what the roof is made of. The model runs on the phone itself, inside a
+hidden web view, so nothing else has to be started: `npx expo start` and Expo Go are enough.
 
-1. Start the server on a laptop (Python 3.10+):
-
-   ```bash
-   cd roof-api
-   pip install -r requirements.txt
-   python server.py
-   ```
-
-2. Copy `.env.example` to `.env.local` and put the laptop's address in it (find it with `ipconfig`), for example
-   `EXPO_PUBLIC_ROOF_API_URL=http://192.168.1.20:8000`. The phone must be on the same Wi-Fi.
-3. Restart `npx expo start`. On the roof step a card shows the AI's answer, how sure it is and the other materials.
-
-When the AI is at least 60% sure and IGN has no material for the building, the app fills it in. Otherwise it shows
-the answer and lets the user tap "Use". Without the server, the app works as before (IGN record or the user's choice).
+- The model files live in [`assets/roof-model/`](assets/roof-model/): ConvNeXt (8-bit) and EfficientNet in ONNX,
+  the colour model as packed decision trees, `meta.json` with the ensemble weights, and `engine.html`, which finds the
+  building, downloads the IGN aerial tiles, cuts the roof out exactly like the training crops and runs the models
+  with onnxruntime-web.
+- The first detection downloads about 50 MB of model files from the dev server and the runtime from jsDelivr, then
+  keeps them on the phone. It takes up to a minute the first time and a few seconds after that.
+- When the AI is at least 60% sure and IGN has no material for the building, the app fills it in. Otherwise it shows
+  the answer and lets the user tap "Use". If the AI cannot read the roof, the user picks the material as before.
+- [`roof-api/`](roof-api/) runs the same model in Python on a laptop, to check answers. It is not needed by the app.
+  On 48 test roofs the phone and Python gave the same answer every time, with identical roof crops.
 
 ## Scripts
 
@@ -75,7 +71,7 @@ src/
   data/
     calculations/               pure functions, no React: simulation, finance, resilience,
                                 quality, recommendations, tank size, constants
-    services/                   network and device access: IGN, Open-Meteo, GPS, roof model
+    services/                   network and device access: IGN, Open-Meteo, GPS, roof model bridge
     store/                      project state (context + reducer), saved on the phone
     hooks/                      results and tank status shared by several features
   features/<feature>/           onboarding, buildings, setup, results, tank, alerts, settings
