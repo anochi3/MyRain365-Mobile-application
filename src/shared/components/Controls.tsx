@@ -1,4 +1,4 @@
-import { Check, Minus, Plus } from 'phosphor-react-native';
+import { Check, Minus, Plus, Sparkle } from 'phosphor-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { colors, fonts, radii, shadows } from '@/shared/global.styles';
@@ -8,10 +8,11 @@ import AppText from './AppText';
 type ChipProps = {
   label: string;
   isSelected: boolean;
+  isSuggested?: boolean;
   onPress: () => void;
 };
 
-export function Chip({ label, isSelected, onPress }: ChipProps) {
+export function Chip({ label, isSelected, isSuggested = false, onPress }: ChipProps) {
   return (
     <Pressable
       onPress={onPress}
@@ -19,7 +20,11 @@ export function Chip({ label, isSelected, onPress }: ChipProps) {
       accessibilityState={{ selected: isSelected }}
       style={[styles.chip, isSelected && styles.chipSelected]}
     >
-      {isSelected && <Check size={14} weight="bold" color={colors.green} />}
+      {isSuggested ? (
+        <Sparkle size={14} weight={isSelected ? 'fill' : 'bold'} color={colors.green} />
+      ) : (
+        isSelected && <Check size={14} weight="bold" color={colors.green} />
+      )}
       <AppText style={[styles.chipLabel, isSelected && styles.chipLabelSelected]}>{label}</AppText>
     </Pressable>
   );

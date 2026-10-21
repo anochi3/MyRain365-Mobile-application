@@ -16,7 +16,7 @@ export type PollutionSource = 'none' | 'traffic' | 'industry' | 'agriculture';
 
 export type AccessNeed = 'stepFreeAccess' | 'easyTap' | 'lightMaintenance' | 'helpNeeded';
 
-export type MaterialSource = 'model' | 'ign' | 'user';
+export type MaterialSource = 'model' | 'ign' | 'user' | 'guess';
 
 export type Building = {
   id: string;
@@ -53,9 +53,19 @@ export type Quality = {
   pollution: PollutionSource;
 };
 
+export type RoofDetection = {
+  buildingId: string;
+  material: RoofMaterial;
+  confidence: number;
+  shouldAskUser: boolean;
+  probabilities: { material: RoofMaterial; probability: number }[];
+  modelVersion: string | null;
+};
+
 export type Project = {
   building: Building | null;
   roof: Roof;
+  roofDetection: RoofDetection | null;
   household: Household;
   site: Site;
   quality: Quality;

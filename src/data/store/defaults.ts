@@ -10,10 +10,11 @@ export const emptyProject: Project = {
   roof: {
     areaM2: 0,
     material: 'tiles',
-    materialSource: 'user',
+    materialSource: 'guess',
     materialConfidence: null,
     drainedShare: 1,
   },
+  roofDetection: null,
   household: {
     people: DEFAULT_PEOPLE,
     uses: { toilets: true, laundry: true, garden: true, cleaning: false, drinking: false },
@@ -67,6 +68,7 @@ export const exampleProject: Project = {
     materialConfidence: null,
     drainedShare: 1,
   },
+  roofDetection: null,
   site: {
     kind: 'private',
     isCouree: true,

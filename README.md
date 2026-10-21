@@ -25,8 +25,12 @@ hidden web view, so nothing else has to be started: `npx expo start` and Expo Go
   with onnxruntime-web.
 - The first detection downloads about 50 MB of model files from the dev server and the runtime from jsDelivr, then
   keeps them on the phone. It takes up to a minute the first time and a few seconds after that.
-- When the AI is at least 60% sure and IGN has no material for the building, the app fills it in. Otherwise it shows
-  the answer and lets the user tap "Use". If the AI cannot read the roof, the user picks the material as before.
+- The AI starts as soon as the user taps "Use this roof" (or loads the example), so the answer is usually ready by
+  the time the roof step opens. It runs in [`RoofDetectionProvider`](src/data/store/RoofDetectionProvider.tsx) at
+  the root of the app and stores its answer with the project, so each building is read once.
+- In the Roof material field the AI's answer is selected automatically and a note says "Our AI thinks this roof is
+  ...", with how sure it is and all four scores on demand. A material the user tapped stays. An IGN record stays
+  when the AI is less than 60% sure, with a "Use ..." link to switch.
 - [`roof-api/`](roof-api/) runs the same model in Python on a laptop, to check answers. It is not needed by the app.
   On 48 test roofs the phone and Python gave the same answer every time, with identical roof crops.
 

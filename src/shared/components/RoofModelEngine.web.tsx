@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import { ROOF_MODEL_CHANNEL } from '@/data/services/roofMaterialService';
 
-import { useRoofModelBridge } from '../hooks/useRoofModelBridge';
+import { useRoofModelBridge } from '@/data/hooks/useRoofModelBridge';
 import type { RoofModelEngineProps } from './roofModelEngine.types';
 
 export default function RoofModelEngine(props: RoofModelEngineProps) {

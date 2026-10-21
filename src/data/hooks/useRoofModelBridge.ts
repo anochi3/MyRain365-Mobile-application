@@ -8,7 +8,7 @@ import {
   type RoofModelCommand,
 } from '@/data/services/roofMaterialService';
 
-import type { RoofModelEngineProps } from '../components/roofModelEngine.types';
+import type { RoofModelEngineProps } from '@/shared/components/roofModelEngine.types';
 
 const DETECTION_TIMEOUT_MS = 120000;
 

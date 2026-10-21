@@ -55,7 +55,7 @@ export default function RoofSelectionScreen() {
         areaM2: building.roofAreaM2,
         drainedShare: 1,
         material: ignMaterial ?? (building.isFlatRoof ? 'flat' : 'tiles'),
-        materialSource: ignMaterial ? 'ign' : 'user',
+        materialSource: ignMaterial ? 'ign' : 'guess',
         materialConfidence: null,
       },
     );

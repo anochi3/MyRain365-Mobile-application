@@ -1,48 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
-
-import type { DetectedMaterial } from '@/data/services/roofMaterialService';
 import { useProjectActions, useProjectStore } from '@/data/store/ProjectProvider';
-import type { MaterialSource, RoofMaterial } from '@/data/store/projectTypes';
-
-import type { RoofModelEngineProps } from '../components/roofModelEngine.types';
-
-const AUTO_APPLY_CONFIDENCE = 0.6;
-
-export type DetectionState =
-  | { status: 'disabled' }
-  | { status: 'detecting' }
-  | { status: 'failed' }
-  | { status: 'done'; detection: DetectedMaterial; agreesWithChoice: boolean };
-
-type Outcome = { buildingId: string; detection: DetectedMaterial | null };
+import type { RoofMaterial } from '@/data/store/projectTypes';
+import { useRoofDetection } from '@/data/store/RoofDetectionProvider';
 
 export function useRoofMaterialDetection() {
   const { project } = useProjectStore();
   const { updateRoof } = useProjectActions();
-  const { building, roof } = project;
-  const [outcome, setOutcome] = useState<Outcome | null>(null);
-  const materialSource = useRef<MaterialSource>(roof.materialSource);
-
-  useEffect(() => {
-    materialSource.current = roof.materialSource;
-  }, [roof.materialSource]);
-
-  const handleResult = (detection: DetectedMaterial | null) => {
-    if (!building) return;
-    setOutcome({ buildingId: building.id, detection });
-
-    const isUnset = materialSource.current !== 'user' && materialSource.current !== 'ign';
-    if (detection && isUnset && detection.confidence >= AUTO_APPLY_CONFIDENCE) {
-      updateRoof({
-        material: detection.material,
-        materialSource: 'model',
-        materialConfidence: detection.confidence,
-      });
-    }
-  };
+  const { status, detection, retry } = useRoofDetection();
+  const { roof } = project;
 
   const applySuggestion = (material: RoofMaterial) => {
-    const detection = outcome?.detection;
     const match = detection?.probabilities.find((item) => item.material === material);
     updateRoof({
       material,
@@ -51,25 +17,7 @@ export function useRoofMaterialDetection() {
     });
   };
 
-  let state: DetectionState;
-  if (!building) {
-    state = { status: 'disabled' };
-  } else if (outcome?.buildingId !== building.id) {
-    state = { status: 'detecting' };
-  } else if (outcome.detection) {
-    state = {
-      status: 'done',
-      detection: outcome.detection,
-      agreesWithChoice: outcome.detection.material === roof.material,
-    };
-  } else {
-    state = { status: 'failed' };
-  }
+  const isChosenByAi = roof.materialSource === 'model' && detection?.material === roof.material;
 
-  const engine: RoofModelEngineProps = {
-    coordinates: building ? { latitude: building.latitude, longitude: building.longitude } : null,
-    onResult: handleResult,
-  };
-
-  return { state, applySuggestion, engine };
+  return { status, detection, isChosenByAi, applySuggestion, retry };
 }

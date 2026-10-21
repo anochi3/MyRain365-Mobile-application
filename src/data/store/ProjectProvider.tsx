@@ -19,6 +19,7 @@ import type {
   Project,
   Quality,
   Roof,
+  RoofDetection,
   Site,
 } from './projectTypes';
 
@@ -33,6 +34,7 @@ type Action =
   | { type: 'hydrate'; state: State }
   | { type: 'setBuilding'; building: Building; roof: Partial<Roof> }
   | { type: 'updateRoof'; roof: Partial<Roof> }
+  | { type: 'applyRoofDetection'; detection: RoofDetection }
   | { type: 'updateHousehold'; household: Partial<Household> }
   | { type: 'updateSite'; site: Partial<Site> }
   | { type: 'updateQuality'; quality: Partial<Quality> }
@@ -63,6 +65,27 @@ function reducer(state: State, action: Action): State {
       });
     case 'updateRoof':
       return withProject({ roof: { ...project.roof, ...action.roof } });
+    case 'applyRoofDetection': {
+      const { detection } = action;
+      if (project.building?.id !== detection.buildingId) {
+        return state;
+      }
+      const { roof } = project;
+      const keepsChoice =
+        roof.materialSource === 'user' ||
+        (roof.materialSource === 'ign' && detection.shouldAskUser);
+      return withProject({
+        roofDetection: detection,
+        roof: keepsChoice
+          ? roof
+          : {
+              ...roof,
+              material: detection.material,
+              materialSource: 'model',
+              materialConfidence: detection.confidence,
+            },
+      });
+    }
     case 'updateHousehold':
       return withProject({
         household: {
@@ -168,6 +191,10 @@ export function useProjectActions() {
     ),
     updateRoof: useCallback(
       (roof: Partial<Roof>) => dispatch({ type: 'updateRoof', roof }),
+      [dispatch],
+    ),
+    applyRoofDetection: useCallback(
+      (detection: RoofDetection) => dispatch({ type: 'applyRoofDetection', detection }),
       [dispatch],
     ),
     updateHousehold: useCallback(

@@ -14,6 +14,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ResultsProvider } from '@/data/hooks/useProjectResults';
 import { ProjectProvider, useProjectStore } from '@/data/store/ProjectProvider';
+import { RoofDetectionProvider } from '@/data/store/RoofDetectionProvider';
 import { colors } from '@/shared/global.styles';
 
 void SplashScreen.preventAutoHideAsync();
@@ -40,17 +41,22 @@ function AppStack() {
   }
 
   return (
-    <ResultsProvider>
-      <StatusBar style="dark" />
-      <Stack
-        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="welcome" />
-        <Stack.Screen name="setup" />
-        <Stack.Screen name="(tabs)" />
-      </Stack>
-    </ResultsProvider>
+    <RoofDetectionProvider>
+      <ResultsProvider>
+        <StatusBar style="dark" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+          }}
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen name="welcome" />
+          <Stack.Screen name="setup" />
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+      </ResultsProvider>
+    </RoofDetectionProvider>
   );
 }
 

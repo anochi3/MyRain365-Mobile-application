@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Info, Sparkle } from 'phosphor-react-native';
+import { Database, Info } from 'phosphor-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
@@ -14,8 +14,7 @@ import { Notice } from '@/shared/components/Notice';
 import { colors, fonts } from '@/shared/global.styles';
 import { useI18n } from '@/shared/i18n';
 
-import MaterialDetectionCard from '../components/MaterialDetectionCard';
-import RoofModelEngine from '../components/RoofModelEngine';
+import AiMaterialNote from '../components/AiMaterialNote';
 import SetupScaffold from '../components/SetupScaffold';
 import { useRoofMaterialDetection } from '../hooks/useRoofMaterialDetection';
 
@@ -44,12 +43,7 @@ export default function RoofScreen() {
   };
 
   const runoff = RUNOFF_COEFFICIENT[roof.material];
-  const sourceBadge =
-    roof.materialSource === 'model' && roof.materialConfidence !== null
-      ? fill(s.roof.detected, { value: Math.round(roof.materialConfidence * 100) })
-      : roof.materialSource === 'ign'
-        ? s.roof.fromIgn
-        : null;
+  const sourceBadge = roof.materialSource === 'ign' ? s.roof.fromIgn : null;
 
   return (
     <SetupScaffold
@@ -111,17 +105,26 @@ export default function RoofScreen() {
           </AppText>
           {sourceBadge ? (
             <View style={styles.badge}>
-              <Sparkle size={14} weight="fill" color={colors.green} />
+              <Database size={14} weight="fill" color={colors.green} />
               <AppText style={styles.badgeText}>{sourceBadge}</AppText>
             </View>
           ) : null}
         </View>
+        <AiMaterialNote
+          status={detection.status}
+          detection={detection.detection}
+          isChosenByAi={detection.isChosenByAi}
+          materialSource={roof.materialSource}
+          onUse={detection.applySuggestion}
+          onRetry={detection.retry}
+        />
         <View style={styles.chips}>
           {MATERIALS.map((material) => (
             <Chip
               key={material}
               label={s.roof.materials[material]}
               isSelected={roof.material === material}
+              isSuggested={detection.detection?.material === material}
               onPress={() =>
                 updateRoof({ material, materialSource: 'user', materialConfidence: null })
               }
@@ -138,9 +141,6 @@ export default function RoofScreen() {
           </AppText>
         </View>
       </Card>
-
-      <MaterialDetectionCard state={detection.state} onUse={detection.applySuggestion} />
-      {detection.engine.coordinates ? <RoofModelEngine {...detection.engine} /> : null}
 
       {roof.material === 'thatched' ? (
         <Notice tone="warning" text={s.roof.thatchedWarning} />

@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-import { useRoofModelBridge } from '../hooks/useRoofModelBridge';
+import { useRoofModelBridge } from '@/data/hooks/useRoofModelBridge';
 import type { RoofModelEngineProps } from './roofModelEngine.types';
 
 export default function RoofModelEngine(props: RoofModelEngineProps) {
