@@ -14,8 +14,25 @@ npx expo start
 Scan the QR code with Expo Go, or press `w` to open the web version. "See an example first" on the welcome screen
 loads a real Roubaix courée house so every screen can be explored without typing anything.
 
-Optional: set `EXPO_PUBLIC_ROOF_API_URL` to the roof material API (`../roof-api`) to detect the material from the
-aerial photo. Without it, the app uses the IGN record or the user's choice.
+## Roof AI (test branch `aitestv1`)
+
+The roof step asks our roof material model what the roof is made of. The model runs in a small Python server in
+[`roof-api/`](roof-api/) because it needs the IGN aerial photo, the building outline and about 50 MB of model files.
+
+1. Start the server on a laptop (Python 3.10+):
+
+   ```bash
+   cd roof-api
+   pip install -r requirements.txt
+   python server.py
+   ```
+
+2. Copy `.env.example` to `.env.local` and put the laptop's address in it (find it with `ipconfig`), for example
+   `EXPO_PUBLIC_ROOF_API_URL=http://192.168.1.20:8000`. The phone must be on the same Wi-Fi.
+3. Restart `npx expo start`. On the roof step a card shows the AI's answer, how sure it is and the other materials.
+
+When the AI is at least 60% sure and IGN has no material for the building, the app fills it in. Otherwise it shows
+the answer and lets the user tap "Use". Without the server, the app works as before (IGN record or the user's choice).
 
 ## Scripts
 

@@ -1,0 +1,36 @@
+{
+ "classes": [
+  "tiles",
+  "slate",
+  "metal",
+  "concrete"
+ ],
+ "weights": {
+  "convnext": 0.4,
+  "efficientnet": 0.3,
+  "colour": 0.3
+ },
+ "sizes": {
+  "convnext": 160,
+  "efficientnet": 160
+ },
+ "mean": [
+  0.485,
+  0.456,
+  0.406
+ ],
+ "std": [
+  0.229,
+  0.224,
+  0.225
+ ],
+ "ask_below_confidence": 0.6,
+ "ask_above_roof_m2": 1500,
+ "runoff": {
+  "tiles": 0.85,
+  "slate": 0.85,
+  "metal": 0.9,
+  "concrete": 0.8
+ },
+ "model_version": "round 5: Lille metropolis + Nord, 74,553 roofs, context crops, ConvNeXt + EfficientNet + colour"
+}

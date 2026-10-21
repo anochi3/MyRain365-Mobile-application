@@ -98,6 +98,17 @@ export const en = {
     },
     confirm: 'Looks right',
   },
+  ai: {
+    detectingTitle: 'Our AI is reading your roof',
+    detectingHint: 'Looking at the IGN aerial photo of this building',
+    failed: 'The roof AI is not reachable right now. Pick the material yourself.',
+    verdict: 'Our AI thinks this roof is {material}',
+    confidence: '{value} sure, judged from the aerial photo',
+    unsure: 'It is not sure. Please tap the right material above.',
+    inUse: 'This is the material in use',
+    use: 'Use {material}',
+    source: 'Trained on 74,000 roofs from the Nord, IGN photos and records',
+  },
   home: {
     title: 'Your home',
     people: 'People living here',

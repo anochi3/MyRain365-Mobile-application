@@ -1,10 +1,9 @@
 import { useRouter } from 'expo-router';
 import { Info, Sparkle } from 'phosphor-react-native';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { RUNOFF_COEFFICIENT } from '@/data/calculations/constants';
-import { detectRoofMaterial, isRoofModelAvailable } from '@/data/services/roofMaterialService';
 import { useProjectActions, useProjectStore } from '@/data/store/ProjectProvider';
 import type { RoofMaterial } from '@/data/store/projectTypes';
 import AerialRoof from '@/shared/components/AerialRoof';
@@ -15,7 +14,9 @@ import { Notice } from '@/shared/components/Notice';
 import { colors, fonts } from '@/shared/global.styles';
 import { useI18n } from '@/shared/i18n';
 
+import MaterialDetectionCard from '../components/MaterialDetectionCard';
 import SetupScaffold from '../components/SetupScaffold';
+import { useRoofMaterialDetection } from '../hooks/useRoofMaterialDetection';
 
 const MATERIALS: RoofMaterial[] = ['tiles', 'slate', 'metal', 'flat', 'green', 'thatched'];
 const DRAINED_SHARES = [1, 0.75, 0.5];
@@ -29,22 +30,7 @@ export default function RoofScreen() {
   const [isEditingArea, setIsEditingArea] = useState(false);
   const [areaText, setAreaText] = useState(String(Math.round(roof.areaM2)));
 
-  useEffect(() => {
-    if (!building || !isRoofModelAvailable || roof.materialSource === 'user') return;
-    const controller = new AbortController();
-    detectRoofMaterial(building, controller.signal)
-      .then((detected) => {
-        if (detected) {
-          updateRoof({
-            material: detected.material,
-            materialSource: 'model',
-            materialConfidence: detected.confidence,
-          });
-        }
-      })
-      .catch(() => undefined);
-    return () => controller.abort();
-  }, [building, roof.materialSource, updateRoof]);
+  const detection = useRoofMaterialDetection();
 
   const saveArea = () => {
     const value = Number(areaText.replace(',', '.'));
@@ -151,6 +137,8 @@ export default function RoofScreen() {
           </AppText>
         </View>
       </Card>
+
+      <MaterialDetectionCard state={detection.state} onUse={detection.applySuggestion} />
 
       {roof.material === 'thatched' ? (
         <Notice tone="warning" text={s.roof.thatchedWarning} />

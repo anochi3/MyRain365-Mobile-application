@@ -104,6 +104,17 @@ export const fr: Dictionary = {
     },
     confirm: "C'est bien ça",
   },
+  ai: {
+    detectingTitle: 'Notre IA analyse votre toit',
+    detectingHint: 'Lecture de la photo aérienne IGN de ce bâtiment',
+    failed: "L'IA du toit n'est pas joignable pour le moment. Choisissez le matériau vous-même.",
+    verdict: 'Notre IA pense que ce toit est en {material}',
+    confidence: 'sûre à {value}, d’après la photo aérienne',
+    unsure: "Elle n'est pas sûre. Touchez le bon matériau ci-dessus.",
+    inUse: 'C’est le matériau retenu',
+    use: 'Choisir {material}',
+    source: 'Entraînée sur 74 000 toits du Nord, photos et données IGN',
+  },
   home: {
     title: 'Votre foyer',
     people: 'Personnes dans le logement',
