@@ -5,9 +5,9 @@ import {
   parseRoofModelMessage,
   roofModelEngineUri,
   toDetectedMaterial,
+  type DetectedMaterial,
   type RoofModelCommand,
 } from '@/data/services/roofMaterialService';
-
 import type { RoofModelEngineProps } from '@/shared/components/roofModelEngine.types';
 
 const DETECTION_TIMEOUT_MS = 120000;
@@ -29,6 +29,12 @@ export function useRoofModelBridge(
     onResultRef.current = onResult;
   });
 
+  const [answer] = useState(() => (id: number, detection: DetectedMaterial | null) => {
+    if (id !== latestRequest.current || answeredRequest.current === id) return;
+    answeredRequest.current = id;
+    onResultRef.current(detection);
+  });
+
   const latitude = coordinates?.latitude;
   const longitude = coordinates?.longitude;
 
@@ -44,14 +50,9 @@ export function useRoofModelBridge(
       pendingCommand.current = command;
     }
 
-    const timer = setTimeout(() => {
-      if (latestRequest.current === id && answeredRequest.current !== id) {
-        answeredRequest.current = id;
-        onResultRef.current(null);
-      }
-    }, DETECTION_TIMEOUT_MS);
+    const timer = setTimeout(() => answer(id, null), DETECTION_TIMEOUT_MS);
     return () => clearTimeout(timer);
-  }, [latitude, longitude]);
+  }, [latitude, longitude, answer]);
 
   const handleMessage = (raw: string) => {
     const message = parseRoofModelMessage(raw);
@@ -64,10 +65,10 @@ export function useRoofModelBridge(
       return;
     }
 
-    if (message.id !== latestRequest.current || answeredRequest.current === message.id) return;
-    answeredRequest.current = message.id;
-    onResultRef.current(toDetectedMaterial(message.result));
+    answer(message.id, toDetectedMaterial(message.result));
   };
 
-  return { engineUri, handleMessage };
+  const handleFailure = () => answer(latestRequest.current, null);
+
+  return { engineUri, handleMessage, handleFailure };
 }

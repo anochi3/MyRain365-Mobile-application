@@ -3,23 +3,28 @@ import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 import { useRoofModelBridge } from '@/data/hooks/useRoofModelBridge';
+
 import type { RoofModelEngineProps } from './roofModelEngine.types';
 
 export default function RoofModelEngine(props: RoofModelEngineProps) {
   const webViewRef = useRef<WebView>(null);
-  const { engineUri, handleMessage } = useRoofModelBridge(props, (command) => {
+  const { engineUri, handleMessage, handleFailure } = useRoofModelBridge(props, (command) => {
     webViewRef.current?.injectJavaScript(
       `window.receiveRoofModelCommand(${JSON.stringify(command)}); true;`,
     );
   });
 
   return (
-    <View style={styles.host} pointerEvents="none">
+    <View style={styles.host}>
       <WebView
         ref={webViewRef}
         source={{ uri: engineUri }}
         originWhitelist={['*']}
         onMessage={(event) => handleMessage(event.nativeEvent.data)}
+        onError={handleFailure}
+        onHttpError={handleFailure}
+        onRenderProcessGone={handleFailure}
+        onContentProcessDidTerminate={handleFailure}
       />
     </View>
   );
@@ -32,5 +37,6 @@ const styles = StyleSheet.create({
     height: 1,
     opacity: 0,
     overflow: 'hidden',
+    pointerEvents: 'none',
   },
 });
