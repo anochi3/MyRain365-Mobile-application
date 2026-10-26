@@ -8,6 +8,7 @@ import { colors, radii, spacing } from '@/shared/global.styles';
 import { useI18n } from '@/shared/i18n';
 
 import AppText from './AppText';
+import InfoButton, { type InfoTopic } from './InfoButton';
 import LanguageToggle from './LanguageToggle';
 
 type Props = {
@@ -18,6 +19,7 @@ type Props = {
   children: ReactNode;
   scroll?: boolean;
   hasTabBar?: boolean;
+  info?: InfoTopic;
 };
 
 export default function Screen({
@@ -28,6 +30,7 @@ export default function Screen({
   children,
   scroll = true,
   hasTabBar = false,
+  info,
 }: Props) {
   const router = useRouter();
   const { s } = useI18n();
@@ -52,6 +55,7 @@ export default function Screen({
             <AppText variant="title" numberOfLines={1} style={styles.title}>
               {title}
             </AppText>
+            {info ? <InfoButton topic={info} size={20} /> : null}
           </View>
           {right ?? <LanguageToggle />}
         </View>

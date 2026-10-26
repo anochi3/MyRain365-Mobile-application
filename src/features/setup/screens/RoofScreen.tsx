@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Database, Info } from 'phosphor-react-native';
+import { Database } from 'phosphor-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
@@ -9,6 +9,7 @@ import type { RoofMaterial } from '@/data/store/projectTypes';
 import AerialRoof from '@/shared/components/AerialRoof';
 import AppText from '@/shared/components/AppText';
 import Card from '@/shared/components/Card';
+import InfoButton from '@/shared/components/InfoButton';
 import { Chip, Segmented } from '@/shared/components/Controls';
 import { Notice } from '@/shared/components/Notice';
 import { colors, fonts } from '@/shared/global.styles';
@@ -56,9 +57,10 @@ export default function RoofScreen() {
 
       <Card style={styles.section}>
         <View style={styles.row}>
-          <AppText variant="label" style={styles.flex}>
-            {s.roof.area}
-          </AppText>
+          <View style={[styles.row, styles.flex]}>
+            <AppText variant="label">{s.roof.area}</AppText>
+            <InfoButton topic="outline" size={16} />
+          </View>
           <Pressable
             onPress={() => (isEditingArea ? saveArea() : setIsEditingArea(true))}
             hitSlop={8}
@@ -89,7 +91,10 @@ export default function RoofScreen() {
       </Card>
 
       <Card style={styles.section}>
-        <AppText variant="label">{s.roof.drained}</AppText>
+        <View style={styles.row}>
+          <AppText variant="label">{s.roof.drained}</AppText>
+          <InfoButton topic="drained" size={16} />
+        </View>
         <Segmented
           options={DRAINED_SHARES.map((share) => ({ value: share, label: `${share * 100}%` }))}
           value={roof.drainedShare}
@@ -100,9 +105,10 @@ export default function RoofScreen() {
 
       <Card style={styles.section}>
         <View style={styles.row}>
-          <AppText variant="label" style={styles.flex}>
-            {s.roof.material}
-          </AppText>
+          <View style={[styles.row, styles.flex]}>
+            <AppText variant="label">{s.roof.material}</AppText>
+            <InfoButton topic="material" size={16} />
+          </View>
           {sourceBadge ? (
             <View style={styles.badge}>
               <Database size={14} weight="fill" color={colors.green} />
@@ -132,7 +138,7 @@ export default function RoofScreen() {
           ))}
         </View>
         <View style={styles.row}>
-          <Info size={16} color={colors.secondaryText} />
+          <InfoButton topic="runoff" size={16} />
           <AppText variant="caption" style={styles.flex}>
             {fill(s.roof.runoffHint, {
               material: s.roof.materials[roof.material],

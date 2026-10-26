@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import AppText from '@/shared/components/AppText';
 import Button from '@/shared/components/Button';
+import type { InfoTopic } from '@/shared/components/InfoButton';
 import Screen from '@/shared/components/Screen';
 import { colors, radii } from '@/shared/global.styles';
 import { useI18n } from '@/shared/i18n';
@@ -15,6 +16,7 @@ type Props = {
   actionLabel: string;
   onAction: () => void;
   isActionDisabled?: boolean;
+  info?: InfoTopic;
   children: ReactNode;
 };
 
@@ -24,6 +26,7 @@ export default function SetupScaffold({
   actionLabel,
   onAction,
   isActionDisabled,
+  info,
   children,
 }: Props) {
   const { s, fill } = useI18n();
@@ -32,6 +35,7 @@ export default function SetupScaffold({
     <Screen
       title={title}
       showBack
+      info={info}
       footer={<Button label={actionLabel} onPress={onAction} isDisabled={isActionDisabled} />}
     >
       <View

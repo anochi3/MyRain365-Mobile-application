@@ -5,6 +5,7 @@ import { colors } from '@/shared/global.styles';
 
 import AppText from './AppText';
 import { Tile, type CardTone } from './Card';
+import InfoButton, { type InfoTopic } from './InfoButton';
 
 type Props = {
   label: string;
@@ -13,6 +14,7 @@ type Props = {
   color?: string;
   size?: 'large' | 'medium';
   tone?: CardTone;
+  info?: InfoTopic;
 };
 
 export default function StatTile({
@@ -22,10 +24,16 @@ export default function StatTile({
   color = colors.primaryText,
   size = 'large',
   tone,
+  info,
 }: Props) {
   return (
     <Tile tone={tone}>
-      <AppText variant="label">{label}</AppText>
+      <View style={styles.labelRow}>
+        <AppText variant="label" style={styles.label}>
+          {label}
+        </AppText>
+        {info ? <InfoButton topic={info} size={15} /> : null}
+      </View>
       <AppText
         variant="stat"
         color={color}
@@ -48,6 +56,14 @@ export function StatRow({ children }: { children: ReactNode }) {
 }
 
 const styles = StyleSheet.create({
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  label: {
+    flexShrink: 1,
+  },
   value: {
     marginTop: 2,
   },

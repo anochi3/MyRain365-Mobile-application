@@ -32,7 +32,7 @@ export default function WaterCutScreen() {
   });
 
   return (
-    <ResultDetail title={s.waterCut.title}>
+    <ResultDetail title={s.waterCut.title} info="waterCut">
       {({ simulation }) => {
         const startLevel = simulation.typical.months[month - 1].averageLevelL;
         const cut = simulateWaterCut(project.household, startLevel, duration, month);

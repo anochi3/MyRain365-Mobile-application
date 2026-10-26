@@ -65,6 +65,7 @@ export default function RecommendationsScreen() {
   return (
     <ResultDetail
       title={s.recommendations.title}
+      info="recommendations"
       footer={
         <Button
           label={s.recommendations.why}

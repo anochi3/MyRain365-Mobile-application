@@ -31,6 +31,7 @@ export const colors = {
 
   mapBackground: '#2B2F2A',
   mapOverlay: '#0E1928',
+  scrim: 'rgba(14, 25, 40, 0.45)',
   shadow: '#1C2430',
 };
 

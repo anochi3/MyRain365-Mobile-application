@@ -28,7 +28,7 @@ export default function WhyScreen() {
   const { project } = useProjectStore();
 
   return (
-    <ResultDetail title={s.why.title}>
+    <ResultDetail title={s.why.title} info="recommendations">
       {({ simulation, own, shared, verdict }) => {
         const option = verdict.bestOption;
         const copy = s.why[option];

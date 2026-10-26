@@ -592,4 +592,119 @@ export const fr: Dictionary = {
     restart: 'Recommencer pour un autre logement',
     footer: 'MyRain365, projet JUNIA × EURO-TELL',
   },
+  info: {
+    about: 'D’où vient « {title} »',
+    eyebrow: 'D’où vient cette donnée',
+    source: 'Source',
+    openSource: 'Voir la source',
+    close: 'Compris',
+    topics: {
+      address: {
+        title: 'Recherche d’adresse',
+        body: 'Les suggestions viennent de la Base Adresse Nationale, interrogée via la Géoplateforme de l’IGN. Le bouton de localisation utilise la position de votre téléphone.',
+        source: 'Géocodage de la Géoplateforme IGN',
+      },
+      outline: {
+        title: 'Contour du toit',
+        body: 'Le contour est l’emprise du bâtiment dans la BD TOPO de l’IGN, la carte nationale de tous les bâtiments de France. Nous prenons le bâtiment sous l’épingle et mesurons la surface de son contour. Sur la photo aérienne, un immeuble haut peut sembler un peu décalé, car la photo est prise de biais.',
+        source: 'IGN BD TOPO, Licence Ouverte 2.0',
+      },
+      drained: {
+        title: 'Part raccordée',
+        body: 'C’est votre propre estimation. Nous multiplions la surface du toit par cette part, pour ne compter que les gouttières qui vont à la cuve.',
+        source: 'Votre réponse',
+      },
+      material: {
+        title: 'Matériau du toit',
+        body: 'Nous partons du matériau enregistré dans la BD TOPO de l’IGN quand il existe. Notre IA regarde aussi la photo aérienne IGN de votre toit, directement sur votre téléphone. Elle a appris sur 74 553 toits de la métropole lilloise et du Nord. Vous pouvez toujours choisir le matériau vous-même.',
+        source: 'IGN BD TOPO, photos aériennes IGN BD ORTHO, modèle IA MyRain365',
+      },
+      runoff: {
+        title: 'Coefficient de ruissellement',
+        body: 'Toute la pluie qui tombe sur un toit n’arrive pas à la cuve : une partie rebondit, s’évapore ou est absorbée. Nous utilisons des valeurs courantes : tuiles et ardoise 0,85, tôle 0,90, toit plat 0,80, toit végétal 0,50, chaume 0,40. Nous retirons aussi 10 % pour les premières eaux qui rincent le toit.',
+        source: 'Valeurs courantes des études sur la récupération d’eau de pluie',
+      },
+      household: {
+        title: 'Consommation d’eau',
+        body: 'Ce sont nos propres moyennes, pas des relevés de compteur : toilettes 25 L, lave-linge 15 L et nettoyage 5 L par personne et par jour, plus 30 L par jour pour le jardin d’avril à septembre. Nous partons de 3 personnes, ajustez selon votre foyer.',
+        source: 'Estimations MyRain365',
+      },
+      shared: {
+        title: 'Cuve partagée',
+        body: 'Une cuve de courée est modélisée comme une cuve de 15 000 L alimentée par les toits des logements qui la partagent, chacun compté de la taille du vôtre. Cela fait 10 logements, sauf si vous indiquez un autre nombre. Chaque logement paie environ 2 000 à 3 000 €, plus 15 € d’entretien par an.',
+        source: 'Prix courants en France, pas des devis',
+      },
+      quality: {
+        title: 'Qualité de l’eau',
+        body: 'C’est une estimation par règles simples : matériau du toit, état du toit et pollution proche. Seule une analyse en laboratoire mesure la qualité réelle. Les étapes de traitement suivent les règles françaises d’usage de l’eau de pluie dans et autour des logements.',
+        source: 'Arrêté du 21 août 2008, règles MyRain365',
+      },
+      verdict: {
+        title: 'Notre notation',
+        body: 'Eau est Bon quand la pluie couvre au moins la moitié de vos besoins, Moyen à partir d’un quart. Argent est Bon si votre cuve est rentabilisée en 15 ans ou moins, Moyen en 30 ans. Environnement est Bon à partir de 20 m³ de pluie récupérée par an, Moyen à partir de 8.',
+        source: 'Seuils MyRain365',
+      },
+      simulation: {
+        title: 'Comment nous simulons votre cuve',
+        body: 'Nous rejouons chaque jour de pluie de 2015 à 2024 à votre adresse. Chaque jour, le toit remplit la cuve, le surplus déborde et votre foyer utilise ce qu’il y a dedans. Votre couverture est la part de vos besoins satisfaite sur ces dix ans.',
+        source:
+          'API Historical Weather d’Open-Meteo (ERA5). Méthode journalière d’après Fewkes (1999) et Mitchell (2007).',
+      },
+      collected: {
+        title: 'Pluie récupérée',
+        body: '1 mm de pluie sur 1 m² de toit donne 1 litre. Nous multiplions la surface du toit, la part raccordée, la pluie et le coefficient de ruissellement, puis retirons 10 % pour les premières eaux. Le résultat est une moyenne annuelle sur 2015 à 2024.',
+        source: 'Surface du toit IGN, pluie Open-Meteo',
+      },
+      saved: {
+        title: 'Argent économisé',
+        body: 'L’eau de pluie réellement utilisée, multipliée par le prix de l’eau dans la métropole lilloise : 4,58 €/m³ avec l’assainissement, d’après la grille Iléo 2026, ou 2,42 €/m³ pour l’eau seule (SISPEA 2024). Vous pouvez changer dans les Réglages.',
+        source: 'Iléo, Métropole Européenne de Lille',
+      },
+      tank: {
+        title: 'Cuve conseillée',
+        body: 'Nous simulons votre logement avec une cuve de 1 000, 2 000, 3 000 et 5 000 L. Nous conseillons la plus petite taille pour laquelle la taille au-dessus ajoute moins de 5 points de couverture.',
+        source: 'Simulation MyRain365',
+      },
+      payback: {
+        title: 'Retour sur investissement',
+        body: 'Le coût du système divisé par ce que vous économisez chaque année, moins 40 € d’entretien. Les coûts sont des fourchettes de prix courants, donc le retour est aussi une fourchette.',
+        source: 'Estimation MyRain365',
+      },
+      cost: {
+        title: 'Coût',
+        body: 'Fourchettes de prix courantes en France pour chaque élément, pas des devis d’installateurs. Demandez deux devis et vérifiez les aides de la MEL et de l’agence de l’eau avant d’acheter.',
+        source: 'Prix courants en France',
+      },
+      money: {
+        title: 'Prix au m³',
+        body: 'L’eau du réseau utilise le prix Iléo de la métropole lilloise. L’eau de pluie coûte le prix du système réparti sur 25 ans, plus 40 € d’entretien par an, divisé par l’eau utilisée chaque année.',
+        source: 'Iléo, estimation MyRain365',
+      },
+      recommendations: {
+        title: 'Notre classement',
+        body: 'Les options viennent de vos réponses et de vos résultats : place pour une cuve, courée, jardin et besoins d’accès. La meilleure option pour vous vient en premier, celles qui demandent des vérifications en dernier.',
+        source: 'Règles MyRain365',
+      },
+      waterCut: {
+        title: 'Coupure d’eau',
+        body: 'Nous prenons un niveau de cuve habituel pour ce mois et le divisons par ce dont les toilettes et le nettoyage ont besoin chaque jour. Aucune pluie n’est supposée pendant la coupure, donc l’autonomie réelle est souvent plus longue.',
+        source: 'Simulation MyRain365',
+      },
+      month: {
+        title: 'Années sèche et humide',
+        body: 'L’année type est la moyenne de 2015 à 2024. Les années sèche et humide sont les vraies années les moins et les plus pluvieuses de cette période, rejouées seules.',
+        source: 'API Historical Weather d’Open-Meteo',
+      },
+      tankStatus: {
+        title: 'Niveau de la cuve',
+        body: 'Il n’y a pas de capteur. Nous estimons le niveau en rejouant les 60 derniers jours de pluie à votre adresse sur votre cuve. Les jours suivants viennent des prévisions Open-Meteo.',
+        source: 'API Forecast d’Open-Meteo',
+      },
+      alerts: {
+        title: 'Alertes',
+        body: 'Les alertes de pluie utilisent les prévisions Open-Meteo. Un jour à 10 mm ou plus compte comme forte pluie. Les alertes de cuve utilisent le niveau estimé dans Ma cuve.',
+        source: 'API Forecast d’Open-Meteo',
+      },
+    },
+  },
 };

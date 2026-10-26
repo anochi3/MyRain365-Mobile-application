@@ -2,6 +2,7 @@ import { CloudSlash, HouseLine, MapPinLine, WarningCircle, type Icon } from 'pho
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import AppText from '@/shared/components/AppText';
+import InfoButton, { type InfoTopic } from '@/shared/components/InfoButton';
 import Button from '@/shared/components/Button';
 import IconBadge, { badgeColor, type BadgeTone } from '@/shared/components/IconBadge';
 import { colors, fonts, radii, shadows } from '@/shared/global.styles';
@@ -67,6 +68,7 @@ function PanelContent({
             tone="teal"
             title={s.locate.foundTitle}
             subtitle={s.locate.foundSubtitle}
+            info="outline"
           />
           <View style={styles.areaRow}>
             <AppText variant="number">{number(status.roof.building.roofAreaM2)} m²</AppText>
@@ -133,6 +135,7 @@ function PanelContent({
           tone="teal"
           title={s.locate.idleTitle}
           subtitle={s.locate.idleSubtitle}
+          info="address"
         />
       );
   }
@@ -143,9 +146,10 @@ type PanelHeadingProps = {
   tone: BadgeTone;
   title: string;
   subtitle: string;
+  info?: InfoTopic;
 };
 
-function PanelHeading({ icon, tone, title, subtitle }: PanelHeadingProps) {
+function PanelHeading({ icon, tone, title, subtitle, info }: PanelHeadingProps) {
   return (
     <View style={styles.heading}>
       {icon ? (
@@ -159,6 +163,7 @@ function PanelHeading({ icon, tone, title, subtitle }: PanelHeadingProps) {
         <AppText variant="subtitle">{title}</AppText>
         <AppText variant="caption">{subtitle}</AppText>
       </View>
+      {info ? <InfoButton topic={info} /> : null}
     </View>
   );
 }

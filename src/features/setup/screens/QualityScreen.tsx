@@ -34,6 +34,7 @@ export default function QualityScreen() {
   return (
     <SetupScaffold
       title={s.quality.title}
+      info="quality"
       step={4}
       actionLabel={s.common.continue}
       onAction={() => router.push('/setup/review')}

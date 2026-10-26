@@ -24,7 +24,7 @@ export default function MoneyScreen() {
     fill(s.common.range, { low: thousands(low), high: thousands(high) });
 
   return (
-    <ResultDetail title={s.money.title}>
+    <ResultDetail title={s.money.title} info="money">
       {({ own, shared }) => {
         const paysBack = own.payback[0] <= PAYBACK_HORIZON_YEARS;
         const canShare = project.site.isCouree || project.site.kind === 'shared';

@@ -20,7 +20,7 @@ export default function TankSizeScreen() {
   const maxLitres = project.site.tankSpace === 'wall' ? WALL_TANK_MAX_L : Infinity;
 
   return (
-    <ResultDetail title={s.tankSize.title}>
+    <ResultDetail title={s.tankSize.title} info="tank">
       {({ simulation }) => {
         const { bySize } = simulation;
         const best = recommendedTank(bySize, maxLitres);

@@ -38,7 +38,7 @@ export default function WaterQualityScreen() {
   const { s, fill, number } = useResultFormat();
 
   return (
-    <ResultDetail title={s.waterQuality.title}>
+    <ResultDetail title={s.waterQuality.title} info="quality">
       {({ quality }) => (
         <>
           <Card compact>

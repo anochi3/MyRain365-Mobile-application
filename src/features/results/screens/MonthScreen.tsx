@@ -20,7 +20,7 @@ export default function MonthScreen() {
   const [scenario, setScenario] = useState<Scenario>('typical');
 
   return (
-    <ResultDetail title={s.month.title}>
+    <ResultDetail title={s.month.title} info="month">
       {({ simulation }) => {
         const shown = simulation[scenario];
         const overflows = simulation.typical.fullDays > 15;

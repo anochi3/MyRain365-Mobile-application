@@ -27,7 +27,7 @@ export default function CostScreen() {
   const { project } = useProjectStore();
 
   return (
-    <ResultDetail title={s.cost.title}>
+    <ResultDetail title={s.cost.title} info="cost">
       {({ own }) => {
         const years = Array.from(
           { length: HORIZON_YEARS / YEAR_STEP + 1 },

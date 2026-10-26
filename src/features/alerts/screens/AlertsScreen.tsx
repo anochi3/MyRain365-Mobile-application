@@ -20,7 +20,7 @@ export default function AlertsScreen() {
   const visible = alerts.filter((alert) => filter === 'all' || alert.category === filter);
 
   return (
-    <Screen title={s.alerts.title} hasTabBar>
+    <Screen title={s.alerts.title} hasTabBar info="alerts">
       <Segmented
         options={(['all', 'weather', 'tank', 'couree'] as Filter[]).map((value) => ({
           value,

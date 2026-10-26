@@ -562,6 +562,121 @@ export const en = {
     restart: 'Start a new home',
     footer: 'MyRain365, JUNIA × EURO-TELL project',
   },
+  info: {
+    about: 'Where "{title}" comes from',
+    eyebrow: 'Where this comes from',
+    source: 'Source',
+    openSource: 'Open the source',
+    close: 'Got it',
+    topics: {
+      address: {
+        title: 'Address search',
+        body: "Suggestions come from the French national address database (Base Adresse Nationale), searched through IGN's Géoplateforme. The location button uses your phone's position.",
+        source: 'IGN Géoplateforme geocoding',
+      },
+      outline: {
+        title: 'Roof outline',
+        body: 'The outline is the building footprint from IGN BD TOPO, the national map of every building in France. We take the building under the pin and measure the area inside its outline. On the aerial photo, tall buildings can look slightly shifted from it because the photo is taken at an angle.',
+        source: 'IGN BD TOPO, open licence (Licence Ouverte 2.0)',
+      },
+      drained: {
+        title: 'Part that drains',
+        body: 'This is your own estimate. We multiply the roof area by it, so only the part of the roof whose gutters reach the tank counts.',
+        source: 'Your answer',
+      },
+      material: {
+        title: 'Roof material',
+        body: 'We start from the material recorded in IGN BD TOPO when there is one. Our AI also looks at the IGN aerial photo of your roof, directly on your phone. It learned from 74,553 roofs in the Lille metropolis and the Nord. You can always pick the material yourself.',
+        source: 'IGN BD TOPO, IGN BD ORTHO aerial photos, MyRain365 AI model',
+      },
+      runoff: {
+        title: 'Runoff coefficient',
+        body: 'Not all the rain that hits a roof reaches the tank: some splashes off, evaporates or soaks in. We use typical values: tiles and slate 0.85, metal 0.90, flat 0.80, green 0.50, thatch 0.40. We also set aside 10% for the first flush that rinses the roof.',
+        source: 'Typical values from rainwater harvesting studies',
+      },
+      household: {
+        title: 'Water use',
+        body: 'These are our own average figures, not meter readings: toilets 25 L, washing machine 15 L and cleaning 5 L per person a day, plus 30 L a day for the garden from April to September. We start at 3 people, change it to match your home.',
+        source: 'MyRain365 estimates',
+      },
+      shared: {
+        title: 'Shared tank',
+        body: 'A courée tank is modelled as one 15,000 L tank fed by the roofs of the homes sharing it, each counted the size of yours. That is 10 homes unless you set the number. Each home pays about €2,000 to 3,000, plus €15 a year of upkeep.',
+        source: 'Typical French prices, not quotes',
+      },
+      quality: {
+        title: 'Water quality',
+        body: 'This is an estimate from simple rules: your roof material, its condition and nearby pollution. Only a lab test measures the real quality. The treatment steps follow the French rules for using rainwater in and around homes.',
+        source: 'Arrêté du 21 août 2008, MyRain365 rules',
+      },
+      verdict: {
+        title: 'How we rate it',
+        body: 'Water is Good when rain covers at least half your needs, Fair from a quarter. Money is Good if your own tank pays back within 15 years, Fair within 30. Environment is Good from 20 m³ of rain collected a year, Fair from 8.',
+        source: 'MyRain365 thresholds',
+      },
+      simulation: {
+        title: 'How we simulate your tank',
+        body: 'We replay every day of rain from 2015 to 2024 at your address. Each day the roof fills the tank, the extra overflows, and your home uses what is inside. Your coverage is the share of your needs met over those ten years.',
+        source:
+          'Open-Meteo Historical Weather API (ERA5). Daily tank method after Fewkes (1999) and Mitchell (2007).',
+      },
+      collected: {
+        title: 'Rain collected',
+        body: '1 mm of rain on 1 m² of roof is 1 litre. We multiply the roof area, the part that drains, the rain and the runoff coefficient, then remove 10% for the first flush. The result is a yearly average over 2015 to 2024.',
+        source: 'IGN roof area, Open-Meteo rain',
+      },
+      saved: {
+        title: 'Money saved',
+        body: 'The rainwater you actually use, times the mains water price in the Lille metropolis: €4.58/m³ with sewer charges, from the Iléo 2026 price list, or €2.42/m³ for water only (SISPEA 2024). You can switch in Settings.',
+        source: 'Iléo, Métropole Européenne de Lille',
+      },
+      tank: {
+        title: 'Recommended tank',
+        body: 'We run your home with a 1,000, 2,000, 3,000 and 5,000 L tank. We recommend the smallest size where going one size up adds less than 5 points of coverage.',
+        source: 'MyRain365 simulation',
+      },
+      payback: {
+        title: 'Payback',
+        body: 'The system cost divided by what you save each year, minus €40 of upkeep. Costs are typical price ranges, so the payback is a range too.',
+        source: 'MyRain365 estimate',
+      },
+      cost: {
+        title: 'Cost',
+        body: 'Typical price ranges seen in France for each part, not quotes from installers. Get two quotes and check MEL and water-agency grants before buying.',
+        source: 'Typical French prices',
+      },
+      money: {
+        title: 'Price per m³',
+        body: 'Mains water uses the Iléo price for the Lille metropolis. Rainwater costs the system price spread over 25 years, plus €40 a year of upkeep, divided by the water you use each year.',
+        source: 'Iléo, MyRain365 estimate',
+      },
+      recommendations: {
+        title: 'How we rank',
+        body: 'Options come from your answers and results: room for a tank, a courée, garden use and access needs. The best fit for your case comes first, options that need checks come last.',
+        source: 'MyRain365 rules',
+      },
+      waterCut: {
+        title: 'Water cut',
+        body: 'We take a typical tank level for this month and divide it by what toilets and cleaning need each day. No rain is assumed during the cut, so real autonomy is usually longer.',
+        source: 'MyRain365 simulation',
+      },
+      month: {
+        title: 'Dry and wet years',
+        body: 'The typical year is the average of 2015 to 2024. The dry and wet years are the real years with the least and the most rain in that period, replayed on their own.',
+        source: 'Open-Meteo Historical Weather API',
+      },
+      tankStatus: {
+        title: 'Tank level',
+        body: 'There is no sensor. We estimate the level by replaying the last 60 days of rain at your address on your tank. The next days come from the Open-Meteo forecast.',
+        source: 'Open-Meteo Forecast API',
+      },
+      alerts: {
+        title: 'Alerts',
+        body: 'Rain alerts use the Open-Meteo forecast. A day with 10 mm or more counts as heavy rain. Tank alerts use the estimated level from My tank.',
+        source: 'Open-Meteo Forecast API',
+      },
+    },
+  },
 };
 
 type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };

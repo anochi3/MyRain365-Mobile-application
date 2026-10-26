@@ -33,6 +33,7 @@ export default function SiteScreen() {
   return (
     <SetupScaffold
       title={s.site.title}
+      info="shared"
       step={3}
       actionLabel={s.common.continue}
       onAction={() => router.push('/setup/quality')}

@@ -18,7 +18,7 @@ export default function PerformanceScreen() {
   const initials = s.common.monthInitials.split('');
 
   return (
-    <ResultDetail title={s.performance.title}>
+    <ResultDetail title={s.performance.title} info="simulation">
       {({ simulation }) => {
         const { typical } = simulation;
         return (

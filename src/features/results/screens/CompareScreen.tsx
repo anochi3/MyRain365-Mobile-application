@@ -27,6 +27,7 @@ export default function CompareScreen() {
   return (
     <ResultDetail
       title={s.compare.title}
+      info="shared"
       footer={<Button label={s.compare.invite} icon={UsersThree} onPress={invite} />}
     >
       {({ simulation, own, shared, verdict }) => {

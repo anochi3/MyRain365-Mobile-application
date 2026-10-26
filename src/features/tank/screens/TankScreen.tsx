@@ -22,7 +22,7 @@ export default function TankScreen() {
   const state = useTankStatus();
 
   return (
-    <Screen title={s.tank.title} hasTabBar>
+    <Screen title={s.tank.title} hasTabBar info="tankStatus">
       {state.status === 'missing' ? (
         <StateMessage
           title={s.common.noBuilding}

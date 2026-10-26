@@ -21,6 +21,7 @@ import { useProjectStore } from '@/data/store/ProjectProvider';
 import AppText from '@/shared/components/AppText';
 import Button from '@/shared/components/Button';
 import Card from '@/shared/components/Card';
+import InfoButton from '@/shared/components/InfoButton';
 import ListRow from '@/shared/components/ListRow';
 import Screen, { IconButton } from '@/shared/components/Screen';
 import StatTile, { StatRow } from '@/shared/components/StatTile';
@@ -99,7 +100,8 @@ function ResultsContent({ results }: { results: ProjectResults }) {
       <Card tone="warning" style={styles.verdict}>
         <View style={styles.row}>
           <Lightbulb size={18} weight="fill" color={colors.warningTitle} />
-          <AppText style={styles.verdictHeading}>{headline}</AppText>
+          <AppText style={[styles.verdictHeading, styles.flex]}>{headline}</AppText>
+          <InfoButton topic="verdict" />
         </View>
         <AppText variant="subtitle" style={styles.verdictText}>
           {verdictText}
@@ -119,7 +121,12 @@ function ResultsContent({ results }: { results: ProjectResults }) {
       <Card style={styles.coverage}>
         <Donut fraction={typical.coverage} label={percent(typical.coverage)} />
         <View style={styles.flex}>
-          <AppText variant="subtitle">{s.results.coverage}</AppText>
+          <View style={styles.row}>
+            <AppText variant="subtitle" style={styles.shrink}>
+              {s.results.coverage}
+            </AppText>
+            <InfoButton topic="simulation" />
+          </View>
           <AppText variant="caption" style={styles.coverageHint}>
             {fill(s.results.coverageFor, { uses, people: project.household.people })}
           </AppText>
@@ -132,12 +139,14 @@ function ResultsContent({ results }: { results: ProjectResults }) {
           value={m3(typical.inflowM3)}
           hint={s.common.perYear}
           color={colors.green}
+          info="collected"
         />
         <StatTile
           label={s.results.saved}
           value={euros(own.annualSaving)}
           hint={fill(s.results.savedHint, { price: number(own.pricePerM3, 2) })}
           color={colors.buttons}
+          info="saved"
         />
       </StatRow>
       <StatRow>
@@ -145,6 +154,7 @@ function ResultsContent({ results }: { results: ProjectResults }) {
           label={s.results.tank}
           value={fill(s.common.litres, { value: number(project.tankLitres) })}
           hint={s.results.tankHint}
+          info="tank"
         />
         <StatTile
           label={s.results.payback}
@@ -154,15 +164,19 @@ function ResultsContent({ results }: { results: ProjectResults }) {
           }
           color={colors.warningTitle}
           size="medium"
+          info="payback"
         />
       </StatRow>
 
       <Card tone="info" style={styles.waterCut}>
         <Lifebuoy size={26} weight="fill" color={colors.buttons} />
         <View style={styles.flex}>
-          <AppText variant="label" color={colors.primaryText}>
-            {s.results.waterCut}
-          </AppText>
+          <View style={styles.row}>
+            <AppText variant="label" color={colors.primaryText}>
+              {s.results.waterCut}
+            </AppText>
+            <InfoButton topic="waterCut" size={15} />
+          </View>
           <AppText variant="stat" color={colors.buttons}>
             {fill(s.results.waterCutValue, { value: number(waterCut.autonomyDays, 1) })}
           </AppText>
@@ -254,6 +268,9 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  shrink: {
+    flexShrink: 1,
   },
   waterCut: {
     flexDirection: 'row',

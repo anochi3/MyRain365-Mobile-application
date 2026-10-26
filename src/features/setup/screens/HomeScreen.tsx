@@ -35,6 +35,7 @@ export default function HomeScreen() {
   return (
     <SetupScaffold
       title={s.home.title}
+      info="household"
       step={2}
       actionLabel={s.common.continue}
       onAction={() => router.push('/setup/site')}
