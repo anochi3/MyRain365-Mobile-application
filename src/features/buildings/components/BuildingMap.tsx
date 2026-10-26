@@ -1,12 +1,13 @@
 import { useRef } from 'react';
 import { StyleSheet } from 'react-native';
-import { WebView } from 'react-native-webview';
+
+import { WebView, type WebViewHandle } from '@/shared/webView';
 
 import { useMapBridge } from '../hooks/useMapBridge';
 import type { BuildingMapProps } from './buildingMap.types';
 
 export default function BuildingMap(props: BuildingMapProps) {
-  const webViewRef = useRef<WebView>(null);
+  const webViewRef = useRef<WebViewHandle>(null);
   const { html, handleMessage } = useMapBridge(props, (command) => {
     webViewRef.current?.injectJavaScript(
       `window.receiveMapCommand(${JSON.stringify(command)}); true;`,

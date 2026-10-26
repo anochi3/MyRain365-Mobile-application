@@ -1,13 +1,13 @@
 import { useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { WebView } from 'react-native-webview';
 
 import { useRoofModelBridge } from '@/data/hooks/useRoofModelBridge';
+import { WebView, type WebViewHandle } from '@/shared/webView';
 
 import type { RoofModelEngineProps } from './roofModelEngine.types';
 
 export default function RoofModelEngine(props: RoofModelEngineProps) {
-  const webViewRef = useRef<WebView>(null);
+  const webViewRef = useRef<WebViewHandle>(null);
   const { engineUri, handleMessage, handleFailure } = useRoofModelBridge(props, (command) => {
     webViewRef.current?.injectJavaScript(
       `window.receiveRoofModelCommand(${JSON.stringify(command)}); true;`,

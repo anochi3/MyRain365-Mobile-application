@@ -24,12 +24,16 @@ function tabIcon(IconComponent: Icon) {
   };
 }
 
+export const unstable_settings = {
+  anchor: 'results',
+};
+
 export default function TabLayout() {
   const { s } = useI18n();
 
   return (
     <Tabs
-      initialRouteName="results"
+      backBehavior="initialRoute"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.buttons,
